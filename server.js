@@ -467,7 +467,10 @@ function renderPage({ locale = 'en', gsReady = false, error = '' }) {
   <main class="page">
     <section class="hero-shell">
       <div class="hero-topbar">
-        <p class="eyebrow">MadPDF</p>
+        <div class="brand-mark">
+          <img src="/assets/logo.png" alt="MadPDF logo" class="brand-logo" />
+          <p class="eyebrow">MadPDF</p>
+        </div>
         <label class="lang-switcher" for="lang-select">
           <span class="sr-only">${escapeHtml(serverText(lang, 'languageLabel'))}</span>
           <select id="lang-select" aria-label="${escapeHtml(serverText(lang, 'languageLabel'))}">
