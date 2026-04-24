@@ -251,13 +251,9 @@ function renderPage({ gsReady = false, error = '' }) {
   <main class="page">
     <section class="hero-shell">
       <div class="hero-copy">
-        <p class="eyebrow">MadPDF • Product MVP</p>
-        <h1>Compress PDF by DPI, fast and clean.</h1>
+        <p class="eyebrow">MadPDF</p>
+        <h1>Compress PDF by DPI</h1>
         <p class="subtitle">Upload PDF, chọn DPI từ 0 đến 300, theo dõi tiến trình upload theo thời gian thực và tải file đã nén ngay sau khi xử lý xong.</p>
-        <div class="status ${gsReady ? 'ok' : 'bad'}">
-          <span class="dot"></span>
-          ${gsReady ? 'Ghostscript sẵn sàng' : 'Ghostscript chưa cài'}
-        </div>
       </div>
     </section>
 
@@ -301,17 +297,14 @@ function renderPage({ gsReady = false, error = '' }) {
           <p id="selected-file">Chưa chọn file nào</p>
         </label>
 
-        <div class="control-grid">
-          <label class="field">
-            <span>DPI (0 - 300)</span>
+        <div class="control-grid single">
+          <label class="field field-full">
+            <div class="field-head">
+              <span>DPI (0 - 300)</span>
+              <small>DPI thấp hơn thường nén mạnh hơn nhưng có thể giảm chất lượng ảnh.</small>
+            </div>
             <input type="number" name="dpi" min="0" max="300" step="1" value="150" required id="dpi-input" />
-            <small>DPI thấp hơn thường nén mạnh hơn nhưng có thể giảm chất lượng ảnh.</small>
           </label>
-
-          <div class="tips-box">
-            <span class="label">Gợi ý nhanh</span>
-            <p>Từ 0 đến 300, càng nhỏ thì file size càng nhỏ nhưng chất lượng cũng càng kém.</p>
-          </div>
         </div>
 
         <div class="actions">
