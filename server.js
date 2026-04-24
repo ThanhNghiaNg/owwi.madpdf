@@ -344,7 +344,7 @@ function normalizeUploadedFileName(value) {
 
 function sanitizeDownloadName(value) {
   const baseName = path.basename(String(value || 'download.pdf')).trim() || 'download.pdf';
-  return baseName.replace(/[\r\n"]/g, '_');
+  return baseName.normalize('NFC').replace(/[\r\n"]/g, '_');
 }
 
 function asciiFallbackFileName(fileName) {
