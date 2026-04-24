@@ -1,0 +1,23 @@
+{
+  "name": "madpdf",
+  "version": "0.1.0",
+  "description": "MVP web app for compressing PDFs by DPI using Node.js and Ghostscript",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "pdf",
+    "compress",
+    "ghostscript",
+    "nodejs"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^2.0.2"
+  }
+}
