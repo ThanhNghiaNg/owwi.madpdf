@@ -10,12 +10,76 @@ const { spawn } = require('child_process');
 const app = express();
 const port = process.env.PORT || 5175;
 
+const SUPPORTED_LOCALES = ['vi', 'en', 'zh', 'ko', 'ja'];
+const SERVER_MESSAGES = {
+  vi: {
+    gsMissing: 'Máy chủ chưa cài Ghostscript (gs), nên chưa thể nén PDF.',
+    fileRequired: 'Bạn chưa chọn file PDF.',
+    compressFailed: 'Không thể nén PDF.',
+    uploadFailed: 'Upload thất bại. Kiểm tra lại dung lượng hoặc file PDF.',
+    pdfOnly: 'Chỉ hỗ trợ file PDF.',
+    expiredFile: 'File không tồn tại hoặc đã hết hạn.',
+    unknownError: 'Đã có lỗi xảy ra.',
+  },
+  en: {
+    gsMissing: 'Ghostscript (gs) is not installed on the server yet, so PDF compression is unavailable.',
+    fileRequired: 'Please choose a PDF file.',
+    compressFailed: 'Unable to compress the PDF.',
+    uploadFailed: 'Upload failed. Please check the file size and PDF format.',
+    pdfOnly: 'Only PDF files are supported.',
+    expiredFile: 'The file does not exist or has expired.',
+    unknownError: 'Something went wrong.',
+  },
+  zh: {
+    gsMissing: '服务器尚未安装 Ghostscript (gs)，因此暂时无法压缩 PDF。',
+    fileRequired: '请选择一个 PDF 文件。',
+    compressFailed: '无法压缩 PDF。',
+    uploadFailed: '上传失败。请检查文件大小和 PDF 格式。',
+    pdfOnly: '仅支持 PDF 文件。',
+    expiredFile: '文件不存在或已过期。',
+    unknownError: '发生了错误。',
+  },
+  ko: {
+    gsMissing: '서버에 Ghostscript(gs)가 아직 설치되지 않아 PDF 압축을 사용할 수 없습니다.',
+    fileRequired: 'PDF 파일을 선택해 주세요.',
+    compressFailed: 'PDF를 압축할 수 없습니다.',
+    uploadFailed: '업로드에 실패했습니다. 파일 크기와 PDF 형식을 확인해 주세요.',
+    pdfOnly: 'PDF 파일만 지원됩니다.',
+    expiredFile: '파일이 없거나 만료되었습니다.',
+    unknownError: '오류가 발생했습니다.',
+  },
+  ja: {
+    gsMissing: 'サーバーに Ghostscript (gs) がインストールされていないため、PDF を圧縮できません。',
+    fileRequired: 'PDF ファイルを選択してください。',
+    compressFailed: 'PDF を圧縮できませんでした。',
+    uploadFailed: 'アップロードに失敗しました。ファイルサイズと PDF 形式を確認してください。',
+    pdfOnly: 'PDF ファイルのみ対応しています。',
+    expiredFile: 'ファイルが存在しないか、有効期限が切れています。',
+    unknownError: 'エラーが発生しました。',
+  },
+};
+
 const tempRoot = path.join(os.tmpdir(), 'madpdf');
 const uploadDir = path.join(tempRoot, 'uploads');
 const outputDir = path.join(tempRoot, 'outputs');
 
 for (const dir of [tempRoot, uploadDir, outputDir]) {
   fs.mkdirSync(dir, { recursive: true });
+}
+
+function normalizeLocale(value) {
+  const input = String(value || '').toLowerCase();
+  if (input.startsWith('zh')) return 'zh';
+  if (input.startsWith('ko')) return 'ko';
+  if (input.startsWith('ja')) return 'ja';
+  if (input.startsWith('vi')) return 'vi';
+  if (input.startsWith('en')) return 'en';
+  return 'en';
+}
+
+function serverText(locale, key) {
+  const lang = normalizeLocale(locale);
+  return SERVER_MESSAGES[lang]?.[key] || SERVER_MESSAGES.en[key] || key;
 }
 
 const upload = multer({
@@ -26,7 +90,7 @@ const upload = multer({
   fileFilter: (_req, file, cb) => {
     const isPdf = file.mimetype === 'application/pdf' || file.originalname.toLowerCase().endsWith('.pdf');
     if (!isPdf) {
-      return cb(new Error('Chỉ hỗ trợ file PDF.'));
+      return cb(new Error('PDF_ONLY'));
     }
     cb(null, true);
   },
@@ -65,7 +129,7 @@ function runGhostscript(args) {
 
     child.on('error', (error) => {
       if (error.code === 'ENOENT') {
-        reject(new Error('Ghostscript (gs) chưa được cài trên máy chủ. Hãy cài gs rồi chạy lại.'));
+        reject(new Error('GS_MISSING'));
         return;
       }
       reject(error);
@@ -76,7 +140,7 @@ function runGhostscript(args) {
         resolve({ stdout, stderr });
         return;
       }
-      reject(new Error(stderr || stdout || `Ghostscript thoát với mã ${code}`));
+      reject(new Error(stderr || stdout || `Ghostscript exited with code ${code}`));
     });
   });
 }
@@ -232,12 +296,12 @@ async function compressPdf({ file, dpi: rawDpi }) {
 
 function renderPage({ gsReady = false, error = '' }) {
   return `<!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MadPDF — Smart PDF Compression by DPI</title>
-  <meta name="description" content="Compress PDF trực tiếp trên web với DPI tùy chỉnh, upload bằng drag & drop và tải file sau nén ngay lập tức." />
+  <title>MadPDF — Compress PDF by DPI</title>
+  <meta name="description" content="Compress PDF directly in the browser with a custom DPI value and instant download." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -250,18 +314,30 @@ function renderPage({ gsReady = false, error = '' }) {
 
   <main class="page">
     <section class="hero-shell">
+      <div class="hero-topbar">
+        <p class="eyebrow" data-i18n="brand">MadPDF</p>
+        <label class="lang-switcher" for="lang-select">
+          <span class="sr-only" data-i18n="language">Language</span>
+          <select id="lang-select" aria-label="Language">
+            <option value="vi">Tiếng Việt</option>
+            <option value="en">English</option>
+            <option value="zh">中文</option>
+            <option value="ko">한국어</option>
+            <option value="ja">日本語</option>
+          </select>
+        </label>
+      </div>
       <div class="hero-copy">
-        <p class="eyebrow">MadPDF</p>
-        <h1>Compress PDF by DPI</h1>
-	<p class="subtitle">Upload PDF, choose DPI from 0 to 300, compress as much as you want.</p>
+        <h1 data-i18n="heroTitle">Compress PDF by DPI</h1>
+        <p class="subtitle" data-i18n="heroSubtitle">Upload PDF, choose DPI from 0 to 300, compress as much as you want.</p>
       </div>
     </section>
 
     ${!gsReady ? `
       <section class="card notice warning" id="gs-warning">
         <div>
-          <h2>Thiếu Ghostscript (gs)</h2>
-          <p>Engine nén PDF hiện dùng Ghostscript. App vẫn lên giao diện bình thường nhưng chưa thể xử lý file cho tới khi cài xong.</p>
+          <h2 data-i18n="gsTitle">Ghostscript is missing</h2>
+          <p data-i18n="gsBody">The PDF compression engine uses Ghostscript. Install it on the server first to enable processing.</p>
         </div>
         <pre>sudo apt update && sudo apt install ghostscript</pre>
       </section>
@@ -269,7 +345,7 @@ function renderPage({ gsReady = false, error = '' }) {
 
     ${error ? `
       <section class="card notice error">
-        <h2>Thông báo lỗi</h2>
+        <h2 data-i18n="errorTitle">Error</h2>
         <p>${escapeHtml(error)}</p>
       </section>
     ` : ''}
@@ -277,12 +353,12 @@ function renderPage({ gsReady = false, error = '' }) {
     <section class="card app-shell">
       <div class="panel-head">
         <div>
-          <p class="section-kicker">Compression Console</p>
-          <h2>Upload & optimize</h2>
+          <p class="section-kicker" data-i18n="consoleKicker">Compression Console</p>
+          <h2 data-i18n="consoleTitle">Upload & optimize</h2>
         </div>
         <div class="pill-row">
-          <span class="pill">Max file: 100MB</span>
-          <span class="pill">PDF only</span>
+          <span class="pill" data-i18n="maxFile">Max file: 100MB</span>
+          <span class="pill" data-i18n="pdfOnly">PDF only</span>
         </div>
       </div>
 
@@ -291,17 +367,17 @@ function renderPage({ gsReady = false, error = '' }) {
           <input type="file" name="pdf" accept="application/pdf,.pdf" required id="pdf-input" />
           <div class="dropzone-icon">PDF</div>
           <div>
-            <strong>Kéo thả PDF vào đây</strong>
-            <span>hoặc bấm để chọn file từ máy</span>
+            <strong data-i18n="dropTitle">Drop your PDF here</strong>
+            <span data-i18n="dropSubtitle">or click to choose a file</span>
           </div>
-          <p id="selected-file">Chưa chọn file nào</p>
+          <p id="selected-file" data-i18n="noFile">No file selected</p>
         </label>
 
         <div class="control-grid single">
           <label class="field field-full">
             <div class="field-head">
-              <span>DPI (0 - 300)</span>
-              <small>DPI thấp hơn thường nén mạnh hơn nhưng có thể giảm chất lượng ảnh.</small>
+              <span data-i18n="dpiLabel">DPI (0 - 300)</span>
+              <small data-i18n="dpiHint">Lower DPI reduces file size more, but image quality may drop.</small>
             </div>
             <input type="number" name="dpi" min="0" max="300" step="1" value="50" required id="dpi-input" />
           </label>
@@ -309,24 +385,24 @@ function renderPage({ gsReady = false, error = '' }) {
 
         <div class="actions">
           <button type="submit" class="button" id="submit-button" ${gsReady ? '' : 'disabled'}>
-            <span>Compress PDF</span>
+            <span data-i18n="compressButton">Compress PDF</span>
           </button>
-          <p class="helper">Sau khi xử lý xong, bạn sẽ nhận link tải ngay tại đây.</p>
+          <p class="helper" data-i18n="helper">After processing, your download link will appear here.</p>
         </div>
 
         <section class="progress-card hidden" id="progress-card" aria-live="polite">
           <div class="progress-top">
-            <strong id="progress-label">Đang upload...</strong>
+            <strong id="progress-label" data-i18n="uploading">Uploading...</strong>
             <span id="progress-percent">0%</span>
           </div>
           <div class="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
           </div>
-          <p id="progress-note">Chuẩn bị gửi file lên server...</p>
+          <p id="progress-note" data-i18n="uploadPrepare">Preparing upload...</p>
         </section>
 
         <section class="notice error hidden" id="error-card">
-          <h2>Không thể xử lý</h2>
+          <h2 data-i18n="errorTitle">Error</h2>
           <p id="error-message"></p>
         </section>
 
@@ -334,11 +410,11 @@ function renderPage({ gsReady = false, error = '' }) {
           <div class="result-inline">
             <div class="result-copy">
               <strong id="result-file-name">-</strong>
-              <p>File sau nén <span id="stat-compressed-size">-</span> • Tiết kiệm <span id="stat-saved-percent">-</span></p>
+              <p id="result-summary">Compressed file <span id="stat-compressed-size">-</span> • Saved <span id="stat-saved-percent">-</span></p>
             </div>
-            <a class="button secondary download-button" id="download-link" href="#" aria-label="Tải về">
+            <a class="button secondary download-button" id="download-link" href="#" aria-label="Download">
               <span class="button-icon" aria-hidden="true">↓</span>
-              <span>Tải về</span>
+              <span data-i18n="download">Download</span>
             </a>
           </div>
         </section>
@@ -346,7 +422,7 @@ function renderPage({ gsReady = false, error = '' }) {
     </section>
   </main>
 
-  <script>window.__MADPDF__ = ${JSON.stringify({ gsReady })};</script>
+  <script>window.__MADPDF__ = ${JSON.stringify({ gsReady, supportedLocales: SUPPORTED_LOCALES })};</script>
   <script src="/app.js"></script>
 </body>
 </html>`;
@@ -357,56 +433,49 @@ app.get('/', async (_req, res) => {
   res.send(renderPage({ gsReady }));
 });
 
-app.get('/api/status', async (_req, res) => {
+app.get('/api/status', async (req, res) => {
   const gsReady = await ghostscriptAvailable();
-  res.json({ ok: true, gsReady });
+  const locale = normalizeLocale(req.query.locale);
+  res.json({ ok: true, gsReady, locale });
 });
 
 app.post('/api/compress', upload.single('pdf'), async (req, res) => {
+  const locale = normalizeLocale(req.body?.locale);
   const gsReady = await ghostscriptAvailable();
 
   if (!gsReady) {
     if (req.file) await removeFileSafe(req.file.path);
-    res.status(503).json({
-      ok: false,
-      error: 'Máy chủ chưa cài Ghostscript (gs), nên chưa thể nén PDF.',
-      code: 'GS_MISSING',
-    });
+    res.status(503).json({ ok: false, error: serverText(locale, 'gsMissing'), code: 'GS_MISSING' });
     return;
   }
 
   if (!req.file) {
-    res.status(400).json({
-      ok: false,
-      error: 'Bạn chưa chọn file PDF.',
-      code: 'FILE_REQUIRED',
-    });
+    res.status(400).json({ ok: false, error: serverText(locale, 'fileRequired'), code: 'FILE_REQUIRED' });
     return;
   }
 
   try {
     const result = await compressPdf({ file: req.file, dpi: req.body.dpi });
-    res.json({ ok: true, result });
+    res.json({ ok: true, result, locale });
   } catch (error) {
-    res.status(500).json({
-      ok: false,
-      error: error.message || 'Không thể nén PDF.',
-      code: 'COMPRESS_FAILED',
-    });
+    const code = error.message === 'GS_MISSING' ? 'GS_MISSING' : 'COMPRESS_FAILED';
+    const key = code === 'GS_MISSING' ? 'gsMissing' : 'compressFailed';
+    res.status(500).json({ ok: false, error: serverText(locale, key), code });
   }
 });
 
 app.post('/compress', upload.single('pdf'), async (req, res) => {
+  const locale = normalizeLocale(req.body?.locale);
   const gsReady = await ghostscriptAvailable();
 
   if (!gsReady) {
     if (req.file) await removeFileSafe(req.file.path);
-    res.status(503).send(renderPage({ gsReady }));
+    res.status(503).send(renderPage({ gsReady, error: serverText(locale, 'gsMissing') }));
     return;
   }
 
   if (!req.file) {
-    res.status(400).send(renderPage({ gsReady }));
+    res.status(400).send(renderPage({ gsReady, error: serverText(locale, 'fileRequired') }));
     return;
   }
 
@@ -414,7 +483,7 @@ app.post('/compress', upload.single('pdf'), async (req, res) => {
     const result = await compressPdf({ file: req.file, dpi: req.body.dpi });
     res.redirect(result.downloadUrl);
   } catch (_error) {
-    res.status(500).send(renderPage({ gsReady }));
+    res.status(500).send(renderPage({ gsReady, error: serverText(locale, 'compressFailed') }));
   }
 });
 
@@ -422,6 +491,7 @@ app.get('/download/:fileName', async (req, res) => {
   const fileName = path.basename(req.params.fileName);
   const filePath = path.join(outputDir, fileName);
   const requestedName = sanitizeDownloadName(normalizeUploadedFileName(req.query.name || fileName));
+  const locale = normalizeLocale(req.query.locale);
 
   try {
     await fsp.access(filePath, fs.constants.R_OK);
@@ -433,15 +503,19 @@ app.get('/download/:fileName', async (req, res) => {
       }
     });
   } catch (_error) {
-    res.status(404).send('File không tồn tại hoặc đã hết hạn.');
+    res.status(404).send(serverText(locale, 'expiredFile'));
   }
 });
 
-app.use((error, _req, res, _next) => {
-  const isApi = (_req.originalUrl || '').startsWith('/api/');
-  const message = error instanceof multer.MulterError
-    ? 'Upload thất bại. Kiểm tra lại dung lượng hoặc file PDF.'
-    : (error.message || 'Đã có lỗi xảy ra.');
+app.use((error, req, res, _next) => {
+  const locale = normalizeLocale(req.body?.locale || req.query?.locale);
+  const isApi = (req.originalUrl || '').startsWith('/api/');
+  const key = error instanceof multer.MulterError
+    ? 'uploadFailed'
+    : error.message === 'PDF_ONLY'
+      ? 'pdfOnly'
+      : 'unknownError';
+  const message = serverText(locale, key);
 
   if (isApi) {
     res.status(400).json({ ok: false, error: message, code: 'UPLOAD_ERROR' });
@@ -449,9 +523,9 @@ app.use((error, _req, res, _next) => {
   }
 
   ghostscriptAvailable().then((gsReady) => {
-    res.status(400).send(renderPage({ gsReady, error: escapeHtml(message) }));
+    res.status(400).send(renderPage({ gsReady, error: message }));
   }).catch(() => {
-    res.status(400).send(renderPage({ gsReady: false, error: escapeHtml(message) }));
+    res.status(400).send(renderPage({ gsReady: false, error: message }));
   });
 });
 
