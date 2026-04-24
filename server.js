@@ -573,6 +573,18 @@ function renderPage({ locale = 'en', gsReady = false, error = '' }) {
         </section>
       </form>
     </section>
+
+    <footer class="site-footer">
+      <p>© 2026 ThanhNghia</p>
+      <div class="footer-links">
+        <a href="https://github.com/ThanhNghiaNg" target="_blank" rel="noreferrer noopener" aria-label="GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5C5.65.5.5 5.8.5 12.35c0 5.24 3.3 9.68 7.87 11.25.58.11.79-.26.79-.57 0-.28-.01-1.03-.02-2.03-3.2.72-3.88-1.58-3.88-1.58-.52-1.37-1.28-1.73-1.28-1.73-1.05-.74.08-.73.08-.73 1.16.08 1.77 1.23 1.77 1.23 1.04 1.84 2.72 1.31 3.38 1 .1-.77.41-1.31.74-1.61-2.55-.3-5.24-1.32-5.24-5.86 0-1.29.45-2.34 1.2-3.17-.12-.3-.52-1.52.11-3.17 0 0 .98-.32 3.2 1.21a10.72 10.72 0 0 1 5.82 0c2.22-1.53 3.2-1.21 3.2-1.21.63 1.65.23 2.87.11 3.17.75.83 1.2 1.88 1.2 3.17 0 4.55-2.7 5.55-5.28 5.85.42.37.79 1.08.79 2.19 0 1.58-.02 2.85-.02 3.24 0 .31.21.69.8.57A11.9 11.9 0 0 0 23.5 12.35C23.5 5.8 18.35.5 12 .5Z"/></svg>
+        </a>
+        <a href="https://www.linkedin.com/in/nghia-nguyen-thanh/" target="_blank" rel="noreferrer noopener" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4.98 3.5A2.49 2.49 0 0 0 2.5 6c0 1.38 1.1 2.5 2.48 2.5h.03A2.5 2.5 0 0 0 7.5 6 2.49 2.49 0 0 0 5 3.5h-.02ZM3 9.5h4v11H3v-11Zm6.5 0h3.83v1.5h.05c.53-1 1.84-2.05 3.8-2.05 4.07 0 4.82 2.75 4.82 6.32v5.23h-4v-4.64c0-1.1-.02-2.52-1.5-2.52-1.51 0-1.74 1.2-1.74 2.44v4.72h-4v-11Z"/></svg>
+        </a>
+      </div>
+    </footer>
   </main>
 
   <script>window.__MADPDF__ = ${JSON.stringify({ gsReady, supportedLocales: SUPPORTED_LOCALES, locale: lang, version: APP_VERSION })};</script>
