@@ -196,9 +196,11 @@ function updateResultSummary() {
 
 function renderResult(result) {
   if (!result) return;
-  lastResult = result;
-  resultFileName.textContent = result.originalName;
+  const normalizedOriginalName = String(result.originalName || 'download.pdf').normalize('NFC');
+  lastResult = { ...result, originalName: normalizedOriginalName };
+  resultFileName.textContent = normalizedOriginalName;
   downloadLink.href = withLang(result.downloadUrl);
+  downloadLink.download = normalizedOriginalName;
   updateResultSummary();
   show(resultCard);
 }
