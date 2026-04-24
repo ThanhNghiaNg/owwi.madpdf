@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const { spawn } = require('child_process');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5175;
 
 const tempRoot = path.join(os.tmpdir(), 'madpdf');
 const uploadDir = path.join(tempRoot, 'uploads');
@@ -33,6 +33,7 @@ const upload = multer({
 });
 
 app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 function clampDpi(value) {
@@ -119,86 +120,249 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function renderPage({ result = null, error = '', form = {}, gsReady = false }) {
-  const dpi = typeof form.dpi === 'undefined' ? 150 : clampDpi(form.dpi);
+function cleanupLater(...filePaths) {
+  setTimeout(() => {
+    for (const filePath of filePaths) {
+      removeFileSafe(filePath);
+    }
+  }, 10 * 60 * 1000).unref();
+}
+
+async function compressPdf({ file, dpi: rawDpi }) {
+  const dpi = clampDpi(rawDpi);
+  const profile = compressionProfileForDpi(dpi);
+  const inputPath = file.path;
+  const safeBaseName = path.parse(file.originalname).name.replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 80) || 'compressed';
+  const outputName = `${safeBaseName}-${crypto.randomUUID()}.pdf`;
+  const outputPath = path.join(outputDir, outputName);
+
+  const gsArgs = [
+    '-sDEVICE=pdfwrite',
+    '-dCompatibilityLevel=1.4',
+    '-dNOPAUSE',
+    '-dQUIET',
+    '-dBATCH',
+    `-dPDFSETTINGS=${profile}`,
+    '-dDownsampleColorImages=true',
+    '-dDownsampleGrayImages=true',
+    '-dDownsampleMonoImages=true',
+    '-dColorImageDownsampleType=/Bicubic',
+    '-dGrayImageDownsampleType=/Bicubic',
+    '-dMonoImageDownsampleType=/Subsample',
+    `-dColorImageResolution=${dpi || 1}`,
+    `-dGrayImageResolution=${dpi || 1}`,
+    `-dMonoImageResolution=${dpi || 1}`,
+    `-sOutputFile=${outputPath}`,
+    inputPath,
+  ];
+
+  try {
+    await runGhostscript(gsArgs);
+
+    const [originalStats, compressedStats] = await Promise.all([
+      fsp.stat(inputPath),
+      fsp.stat(outputPath),
+    ]);
+
+    const savedBytes = Math.max(0, originalStats.size - compressedStats.size);
+    const savedPercent = originalStats.size > 0
+      ? Number((((originalStats.size - compressedStats.size) / originalStats.size) * 100).toFixed(1))
+      : 0;
+
+    cleanupLater(inputPath, outputPath);
+
+    return {
+      fileName: outputName,
+      originalName: file.originalname,
+      dpi,
+      originalBytes: originalStats.size,
+      compressedBytes: compressedStats.size,
+      savedBytes,
+      savedPercent,
+      originalSize: formatBytes(originalStats.size),
+      compressedSize: formatBytes(compressedStats.size),
+      savedSize: formatBytes(savedBytes),
+      downloadUrl: `/download/${encodeURIComponent(outputName)}`,
+    };
+  } catch (error) {
+    await removeFileSafe(inputPath);
+    await removeFileSafe(outputPath);
+    throw error;
+  }
+}
+
+function renderPage({ gsReady = false, error = '' }) {
   return `<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MadPDF - Compress PDF by DPI</title>
+  <title>MadPDF — Smart PDF Compression by DPI</title>
+  <meta name="description" content="Compress PDF trực tiếp trên web với DPI tùy chỉnh, upload bằng drag & drop và tải file sau nén ngay lập tức." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body>
+<body data-gs-ready="${gsReady ? 'true' : 'false'}">
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+  <div class="bg-grid"></div>
+
   <main class="page">
-    <section class="card hero">
-      <div>
-        <p class="eyebrow">Node.js MVP</p>
-        <h1>MadPDF</h1>
-        <p class="subtitle">Upload PDF, nhập DPI từ 0 đến 300, nén file và tải kết quả ngay.</p>
+    <section class="hero-shell">
+      <div class="hero-copy">
+        <p class="eyebrow">MadPDF • Product MVP</p>
+        <h1>Compress PDF by DPI, fast and clean.</h1>
+        <p class="subtitle">Upload PDF, chọn DPI từ 0 đến 300, theo dõi tiến trình upload theo thời gian thực và tải file đã nén ngay sau khi xử lý xong.</p>
+
+        <div class="hero-points">
+          <div class="mini-card">
+            <strong>AJAX Upload</strong>
+            <span>Không reload trang, có progress bar</span>
+          </div>
+          <div class="mini-card">
+            <strong>Custom DPI</strong>
+            <span>Nhập số nguyên từ 0 → 300</span>
+          </div>
+          <div class="mini-card">
+            <strong>Auto Cleanup</strong>
+            <span>Tự xoá file tạm sau xử lý</span>
+          </div>
+        </div>
       </div>
-      <div class="status ${gsReady ? 'ok' : 'bad'}">
-        <span class="dot"></span>
-        ${gsReady ? 'Ghostscript sẵn sàng' : 'Ghostscript chưa cài'}
+
+      <div class="hero-side">
+        <div class="status ${gsReady ? 'ok' : 'bad'}">
+          <span class="dot"></span>
+          ${gsReady ? 'Ghostscript sẵn sàng' : 'Ghostscript chưa cài'}
+        </div>
+
+        <div class="info-panel">
+          <div>
+            <span class="label">Best for</span>
+            <strong>PDF scan, ảnh nhúng, file nặng</strong>
+          </div>
+          <div>
+            <span class="label">Less effective for</span>
+            <strong>PDF text/vector thuần</strong>
+          </div>
+        </div>
       </div>
     </section>
 
     ${!gsReady ? `
-      <section class="card notice warning">
-        <h2>Thiếu Ghostscript (gs)</h2>
-        <p>Engine nén PDF hiện dùng Ghostscript. Trên Ubuntu/Debian bạn có thể cài:</p>
+      <section class="card notice warning" id="gs-warning">
+        <div>
+          <h2>Thiếu Ghostscript (gs)</h2>
+          <p>Engine nén PDF hiện dùng Ghostscript. App vẫn lên giao diện bình thường nhưng chưa thể xử lý file cho tới khi cài xong.</p>
+        </div>
         <pre>sudo apt update && sudo apt install ghostscript</pre>
-        <p>Sau khi cài xong, chạy lại app là dùng được.</p>
       </section>
     ` : ''}
 
-    <section class="card">
-      <form action="/compress" method="post" enctype="multipart/form-data" class="form" id="compress-form">
-        <label class="dropzone" id="dropzone">
-          <input type="file" name="pdf" accept="application/pdf,.pdf" required id="pdf-input" />
-          <div>
-            <strong>Kéo thả PDF vào đây</strong>
-            <span>hoặc bấm để chọn file</span>
-          </div>
-          <p id="selected-file">Chưa chọn file nào</p>
-        </label>
-
-        <div class="field-grid">
-          <label class="field">
-            <span>DPI (0 - 300)</span>
-            <input type="number" name="dpi" min="0" max="300" step="1" value="${escapeHtml(dpi)}" required />
-            <small>DPI càng thấp thường giảm dung lượng mạnh hơn, nhất là PDF scan/ảnh.</small>
-          </label>
-        </div>
-
-        <button type="submit" class="button" ${gsReady ? '' : 'disabled'}>Compress PDF</button>
-      </form>
-    </section>
-
     ${error ? `
       <section class="card notice error">
-        <h2>Lỗi</h2>
+        <h2>Thông báo lỗi</h2>
         <p>${escapeHtml(error)}</p>
       </section>
     ` : ''}
 
-    ${result ? `
-      <section class="card result">
-        <h2>Kết quả</h2>
-        <div class="stats">
-          <div class="stat"><span>File gốc</span><strong>${escapeHtml(result.originalSize)}</strong></div>
-          <div class="stat"><span>File sau nén</span><strong>${escapeHtml(result.compressedSize)}</strong></div>
-          <div class="stat"><span>Tiết kiệm</span><strong>${escapeHtml(result.savedPercent)}%</strong></div>
-          <div class="stat"><span>DPI đã dùng</span><strong>${escapeHtml(result.dpi)}</strong></div>
+    <section class="card app-shell">
+      <div class="panel-head">
+        <div>
+          <p class="section-kicker">Compression Console</p>
+          <h2>Upload & optimize</h2>
         </div>
-        <a class="button secondary" href="${escapeHtml(result.downloadUrl)}">Tải file PDF đã nén</a>
-      </section>
-    ` : ''}
+        <div class="pill-row">
+          <span class="pill">Max file: 100MB</span>
+          <span class="pill">PDF only</span>
+        </div>
+      </div>
+
+      <form class="form" id="compress-form" novalidate>
+        <label class="dropzone" id="dropzone">
+          <input type="file" name="pdf" accept="application/pdf,.pdf" required id="pdf-input" />
+          <div class="dropzone-icon">PDF</div>
+          <div>
+            <strong>Kéo thả PDF vào đây</strong>
+            <span>hoặc bấm để chọn file từ máy</span>
+          </div>
+          <p id="selected-file">Chưa chọn file nào</p>
+        </label>
+
+        <div class="control-grid">
+          <label class="field">
+            <span>DPI (0 - 300)</span>
+            <input type="number" name="dpi" min="0" max="300" step="1" value="150" required id="dpi-input" />
+            <small>DPI thấp hơn thường nén mạnh hơn nhưng có thể giảm chất lượng ảnh.</small>
+          </label>
+
+          <div class="tips-box">
+            <span class="label">Gợi ý nhanh</span>
+            <ul>
+              <li>72–96: nén mạnh cho preview/web</li>
+              <li>120–150: cân bằng chất lượng và dung lượng</li>
+              <li>200–300: ưu tiên giữ chất lượng</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="button" id="submit-button" ${gsReady ? '' : 'disabled'}>
+            <span>Compress PDF</span>
+          </button>
+          <p class="helper">Sau khi xử lý xong, bạn sẽ nhận link tải ngay tại đây.</p>
+        </div>
+
+        <section class="progress-card hidden" id="progress-card" aria-live="polite">
+          <div class="progress-top">
+            <strong id="progress-label">Đang upload...</strong>
+            <span id="progress-percent">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <p id="progress-note">Chuẩn bị gửi file lên server...</p>
+        </section>
+
+        <section class="notice error hidden" id="error-card">
+          <h2>Không thể xử lý</h2>
+          <p id="error-message"></p>
+        </section>
+
+        <section class="result hidden" id="result-card">
+          <div class="result-head">
+            <div>
+              <p class="section-kicker">Completed</p>
+              <h2>File đã nén xong</h2>
+            </div>
+            <a class="button secondary" id="download-link" href="#">Tải file PDF đã nén</a>
+          </div>
+
+          <div class="stats">
+            <div class="stat accent-blue"><span>File gốc</span><strong id="stat-original-size">-</strong></div>
+            <div class="stat accent-violet"><span>File sau nén</span><strong id="stat-compressed-size">-</strong></div>
+            <div class="stat accent-green"><span>Tiết kiệm</span><strong id="stat-saved-percent">-</strong></div>
+            <div class="stat accent-amber"><span>DPI đã dùng</span><strong id="stat-dpi">-</strong></div>
+          </div>
+
+          <div class="result-meta">
+            <div class="meta-item">
+              <span>Tên file</span>
+              <strong id="result-file-name">-</strong>
+            </div>
+            <div class="meta-item">
+              <span>Dung lượng giảm được</span>
+              <strong id="stat-saved-size">-</strong>
+            </div>
+          </div>
+        </section>
+      </form>
+    </section>
   </main>
 
+  <script>window.__MADPDF__ = ${JSON.stringify({ gsReady })};</script>
   <script src="/app.js"></script>
 </body>
 </html>`;
@@ -209,90 +373,64 @@ app.get('/', async (_req, res) => {
   res.send(renderPage({ gsReady }));
 });
 
+app.get('/api/status', async (_req, res) => {
+  const gsReady = await ghostscriptAvailable();
+  res.json({ ok: true, gsReady });
+});
+
+app.post('/api/compress', upload.single('pdf'), async (req, res) => {
+  const gsReady = await ghostscriptAvailable();
+
+  if (!gsReady) {
+    if (req.file) await removeFileSafe(req.file.path);
+    res.status(503).json({
+      ok: false,
+      error: 'Máy chủ chưa cài Ghostscript (gs), nên chưa thể nén PDF.',
+      code: 'GS_MISSING',
+    });
+    return;
+  }
+
+  if (!req.file) {
+    res.status(400).json({
+      ok: false,
+      error: 'Bạn chưa chọn file PDF.',
+      code: 'FILE_REQUIRED',
+    });
+    return;
+  }
+
+  try {
+    const result = await compressPdf({ file: req.file, dpi: req.body.dpi });
+    res.json({ ok: true, result });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error.message || 'Không thể nén PDF.',
+      code: 'COMPRESS_FAILED',
+    });
+  }
+});
+
 app.post('/compress', upload.single('pdf'), async (req, res) => {
   const gsReady = await ghostscriptAvailable();
 
   if (!gsReady) {
     if (req.file) await removeFileSafe(req.file.path);
-    res.status(500).send(renderPage({
-      error: 'Máy chủ chưa cài Ghostscript (gs), nên chưa thể nén PDF.',
-      form: req.body,
-      gsReady,
-    }));
+    res.status(503).send(renderPage({ gsReady }));
     return;
   }
 
   if (!req.file) {
-    res.status(400).send(renderPage({
-      error: 'Bạn chưa chọn file PDF.',
-      form: req.body,
-      gsReady,
-    }));
+    res.status(400).send(renderPage({ gsReady }));
     return;
   }
 
-  const dpi = clampDpi(req.body.dpi);
-  const profile = compressionProfileForDpi(dpi);
-  const inputPath = req.file.path;
-  const outputName = `${path.parse(req.file.originalname).name}-${crypto.randomUUID()}.pdf`;
-  const outputPath = path.join(outputDir, outputName);
-
   try {
-    const gsArgs = [
-      '-sDEVICE=pdfwrite',
-      '-dCompatibilityLevel=1.4',
-      '-dNOPAUSE',
-      '-dQUIET',
-      '-dBATCH',
-      `-dPDFSETTINGS=${profile}`,
-      '-dDownsampleColorImages=true',
-      '-dDownsampleGrayImages=true',
-      '-dDownsampleMonoImages=true',
-      '-dColorImageDownsampleType=/Bicubic',
-      '-dGrayImageDownsampleType=/Bicubic',
-      '-dMonoImageDownsampleType=/Subsample',
-      `-dColorImageResolution=${dpi || 1}`,
-      `-dGrayImageResolution=${dpi || 1}`,
-      `-dMonoImageResolution=${dpi || 1}`,
-      `-sOutputFile=${outputPath}`,
-      inputPath,
-    ];
-
-    await runGhostscript(gsArgs);
-
-    const [originalStats, compressedStats] = await Promise.all([
-      fsp.stat(inputPath),
-      fsp.stat(outputPath),
-    ]);
-
-    const savedPercent = originalStats.size > 0
-      ? (((originalStats.size - compressedStats.size) / originalStats.size) * 100).toFixed(1)
-      : '0.0';
-
-    setTimeout(() => {
-      removeFileSafe(inputPath);
-      removeFileSafe(outputPath);
-    }, 10 * 60 * 1000).unref();
-
-    res.send(renderPage({
-      gsReady,
-      result: {
-        originalSize: formatBytes(originalStats.size),
-        compressedSize: formatBytes(compressedStats.size),
-        savedPercent,
-        dpi,
-        downloadUrl: `/download/${encodeURIComponent(outputName)}`,
-      },
-      form: { dpi },
-    }));
-  } catch (error) {
-    await removeFileSafe(inputPath);
-    await removeFileSafe(outputPath);
-    res.status(500).send(renderPage({
-      error: error.message || 'Không thể nén PDF.',
-      form: { dpi },
-      gsReady,
-    }));
+    const result = await compressPdf({ file: req.file, dpi: req.body.dpi });
+    res.redirect(result.downloadUrl);
+  } catch (_error) {
+    res.status(500).send(renderPage({ gsReady }));
   }
 });
 
@@ -313,14 +451,20 @@ app.get('/download/:fileName', async (req, res) => {
 });
 
 app.use((error, _req, res, _next) => {
+  const isApi = (_req.originalUrl || '').startsWith('/api/');
   const message = error instanceof multer.MulterError
     ? 'Upload thất bại. Kiểm tra lại dung lượng hoặc file PDF.'
     : (error.message || 'Đã có lỗi xảy ra.');
 
+  if (isApi) {
+    res.status(400).json({ ok: false, error: message, code: 'UPLOAD_ERROR' });
+    return;
+  }
+
   ghostscriptAvailable().then((gsReady) => {
-    res.status(400).send(renderPage({ error: message, gsReady }));
+    res.status(400).send(renderPage({ gsReady, error: escapeHtml(message) }));
   }).catch(() => {
-    res.status(400).send(renderPage({ error: message, gsReady: false }));
+    res.status(400).send(renderPage({ gsReady: false, error: escapeHtml(message) }));
   });
 });
 
