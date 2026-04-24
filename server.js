@@ -128,6 +128,22 @@ function cleanupLater(...filePaths) {
   }, 10 * 60 * 1000).unref();
 }
 
+function normalizeUploadedFileName(value) {
+  const input = String(value || '').trim();
+  if (!input) return 'download.pdf';
+
+  try {
+    const repaired = Buffer.from(input, 'latin1').toString('utf8').trim();
+    if (repaired && !repaired.includes('�')) {
+      return repaired;
+    }
+  } catch (_error) {
+    // ignore and keep original
+  }
+
+  return input;
+}
+
 function sanitizeDownloadName(value) {
   const baseName = path.basename(String(value || 'download.pdf')).trim() || 'download.pdf';
   return baseName.replace(/[\r\n"]/g, '_');
@@ -154,7 +170,8 @@ async function compressPdf({ file, dpi: rawDpi }) {
   const dpi = clampDpi(rawDpi);
   const profile = compressionProfileForDpi(dpi);
   const inputPath = file.path;
-  const safeBaseName = path.parse(file.originalname).name.replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 80) || 'compressed';
+  const normalizedOriginalName = normalizeUploadedFileName(file.originalname);
+  const safeBaseName = path.parse(normalizedOriginalName).name.replace(/[^a-zA-Z0-9-_]/g, '-').slice(0, 80) || 'compressed';
   const outputName = `${safeBaseName}-${crypto.randomUUID()}.pdf`;
   const outputPath = path.join(outputDir, outputName);
 
@@ -195,7 +212,7 @@ async function compressPdf({ file, dpi: rawDpi }) {
 
     return {
       fileName: outputName,
-      originalName: file.originalname,
+      originalName: normalizedOriginalName,
       dpi,
       originalBytes: originalStats.size,
       compressedBytes: compressedStats.size,
@@ -204,7 +221,7 @@ async function compressPdf({ file, dpi: rawDpi }) {
       originalSize: formatBytes(originalStats.size),
       compressedSize: formatBytes(compressedStats.size),
       savedSize: formatBytes(savedBytes),
-      downloadUrl: `/download/${encodeURIComponent(outputName)}?name=${encodeURIComponent(file.originalname)}`,
+      downloadUrl: `/download/${encodeURIComponent(outputName)}?name=${encodeURIComponent(normalizedOriginalName)}`,
     };
   } catch (error) {
     await removeFileSafe(inputPath);
@@ -459,7 +476,7 @@ app.post('/compress', upload.single('pdf'), async (req, res) => {
 app.get('/download/:fileName', async (req, res) => {
   const fileName = path.basename(req.params.fileName);
   const filePath = path.join(outputDir, fileName);
-  const requestedName = sanitizeDownloadName(req.query.name || fileName);
+  const requestedName = sanitizeDownloadName(normalizeUploadedFileName(req.query.name || fileName));
 
   try {
     await fsp.access(filePath, fs.constants.R_OK);
