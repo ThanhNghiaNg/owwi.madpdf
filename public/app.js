@@ -18,12 +18,9 @@ const errorMessage = document.getElementById('error-message');
 
 const resultCard = document.getElementById('result-card');
 const downloadLink = document.getElementById('download-link');
-const statOriginalSize = document.getElementById('stat-original-size');
 const statCompressedSize = document.getElementById('stat-compressed-size');
 const statSavedPercent = document.getElementById('stat-saved-percent');
-const statDpi = document.getElementById('stat-dpi');
 const resultFileName = document.getElementById('result-file-name');
-const statSavedSize = document.getElementById('stat-saved-size');
 
 function updateSelectedFile(file) {
   if (!selectedFile) return;
@@ -63,12 +60,9 @@ function setProgress(value, label, note) {
 
 function renderResult(result) {
   if (!result) return;
-  statOriginalSize.textContent = result.originalSize;
   statCompressedSize.textContent = result.compressedSize;
   statSavedPercent.textContent = `${result.savedPercent}%`;
-  statDpi.textContent = String(result.dpi);
   resultFileName.textContent = result.originalName;
-  statSavedSize.textContent = result.savedSize;
   downloadLink.href = result.downloadUrl;
   show(resultCard);
 }

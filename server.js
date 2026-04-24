@@ -254,38 +254,9 @@ function renderPage({ gsReady = false, error = '' }) {
         <p class="eyebrow">MadPDF • Product MVP</p>
         <h1>Compress PDF by DPI, fast and clean.</h1>
         <p class="subtitle">Upload PDF, chọn DPI từ 0 đến 300, theo dõi tiến trình upload theo thời gian thực và tải file đã nén ngay sau khi xử lý xong.</p>
-
-        <div class="hero-points">
-          <div class="mini-card">
-            <strong>AJAX Upload</strong>
-            <span>Không reload trang, có progress bar</span>
-          </div>
-          <div class="mini-card">
-            <strong>Custom DPI</strong>
-            <span>Nhập số nguyên từ 0 → 300</span>
-          </div>
-          <div class="mini-card">
-            <strong>Auto Cleanup</strong>
-            <span>Tự xoá file tạm sau xử lý</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-side">
         <div class="status ${gsReady ? 'ok' : 'bad'}">
           <span class="dot"></span>
           ${gsReady ? 'Ghostscript sẵn sàng' : 'Ghostscript chưa cài'}
-        </div>
-
-        <div class="info-panel">
-          <div>
-            <span class="label">Best for</span>
-            <strong>PDF scan, ảnh nhúng, file nặng</strong>
-          </div>
-          <div>
-            <span class="label">Less effective for</span>
-            <strong>PDF text/vector thuần</strong>
-          </div>
         </div>
       </div>
     </section>
@@ -339,11 +310,7 @@ function renderPage({ gsReady = false, error = '' }) {
 
           <div class="tips-box">
             <span class="label">Gợi ý nhanh</span>
-            <ul>
-              <li>72–96: nén mạnh cho preview/web</li>
-              <li>120–150: cân bằng chất lượng và dung lượng</li>
-              <li>200–300: ưu tiên giữ chất lượng</li>
-            </ul>
+            <p>Từ 0 đến 300, càng nhỏ thì file size càng nhỏ nhưng chất lượng cũng càng kém.</p>
           </div>
         </div>
 
@@ -371,30 +338,15 @@ function renderPage({ gsReady = false, error = '' }) {
         </section>
 
         <section class="result hidden" id="result-card">
-          <div class="result-head">
-            <div>
-              <p class="section-kicker">Completed</p>
-              <h2>File đã nén xong</h2>
-            </div>
-            <a class="button secondary" id="download-link" href="#">Tải file PDF đã nén</a>
-          </div>
-
-          <div class="stats">
-            <div class="stat accent-blue"><span>File gốc</span><strong id="stat-original-size">-</strong></div>
-            <div class="stat accent-violet"><span>File sau nén</span><strong id="stat-compressed-size">-</strong></div>
-            <div class="stat accent-green"><span>Tiết kiệm</span><strong id="stat-saved-percent">-</strong></div>
-            <div class="stat accent-amber"><span>DPI đã dùng</span><strong id="stat-dpi">-</strong></div>
-          </div>
-
-          <div class="result-meta">
-            <div class="meta-item">
-              <span>Tên file</span>
+          <div class="result-inline">
+            <div class="result-copy">
               <strong id="result-file-name">-</strong>
+              <p>File sau nén <span id="stat-compressed-size">-</span> • Tiết kiệm <span id="stat-saved-percent">-</span></p>
             </div>
-            <div class="meta-item">
-              <span>Dung lượng giảm được</span>
-              <strong id="stat-saved-size">-</strong>
-            </div>
+            <a class="button secondary download-button" id="download-link" href="#" aria-label="Tải về">
+              <span class="button-icon" aria-hidden="true">↓</span>
+              <span>Tải về</span>
+            </a>
           </div>
         </section>
       </form>
