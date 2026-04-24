@@ -253,7 +253,7 @@ function renderPage({ gsReady = false, error = '' }) {
       <div class="hero-copy">
         <p class="eyebrow">MadPDF</p>
         <h1>Compress PDF by DPI</h1>
-        <p class="subtitle">Upload PDF, chọn DPI từ 0 đến 300, theo dõi tiến trình upload theo thời gian thực và tải file đã nén ngay sau khi xử lý xong.</p>
+	<p class="subtitle">Upload PDF, choose DPI from 0 to 300, compress as much as you want.</p>
       </div>
     </section>
 
@@ -303,7 +303,7 @@ function renderPage({ gsReady = false, error = '' }) {
               <span>DPI (0 - 300)</span>
               <small>DPI thấp hơn thường nén mạnh hơn nhưng có thể giảm chất lượng ảnh.</small>
             </div>
-            <input type="number" name="dpi" min="0" max="300" step="1" value="150" required id="dpi-input" />
+            <input type="number" name="dpi" min="0" max="300" step="1" value="50" required id="dpi-input" />
           </label>
         </div>
 
