@@ -1,6 +1,6 @@
 # MadPDF
 
-Web app nén PDF bằng Node.js với giao diện product-style và upload AJAX.
+Web app nén PDF bằng Node.js với giao diện product-style, upload AJAX, và hỗ trợ đa ngôn ngữ.
 
 ## Tính năng
 
@@ -10,12 +10,17 @@ Web app nén PDF bằng Node.js với giao diện product-style và upload AJAX.
 - Progress bar theo tiến trình upload
 - Nhập DPI dạng số nguyên từ `0` đến `300`
 - Nén PDF bằng Ghostscript khi có sẵn trên máy
+- Hỗ trợ đa ngôn ngữ:
+  - Tiếng Việt
+  - English
+  - 繁體中文（台灣）
+  - 简体中文（中国大陆）
+  - 한국어
+  - 日本語
 - Hiển thị:
-  - dung lượng file gốc
-  - dung lượng sau nén
+  - dung lượng file sau nén
   - phần trăm tiết kiệm
-  - DPI đã dùng
-  - dung lượng giảm được
+  - tên file
 - Link tải file sau nén ngay trên giao diện
 - Tự xóa file tạm sau khi xử lý hoặc sau khi tải
 - Báo lỗi rõ ràng nếu máy chưa cài `gs`
@@ -39,7 +44,8 @@ Ví dụ response:
 ```json
 {
   "ok": true,
-  "gsReady": false
+  "gsReady": true,
+  "locale": "zh-TW"
 }
 ```
 
@@ -51,6 +57,7 @@ Form fields:
 
 - `pdf`: file PDF
 - `dpi`: số nguyên từ `0` đến `300`
+- `locale`: ngôn ngữ hiện tại, ví dụ `vi`, `en`, `zh-TW`, `zh-CN`
 
 Ví dụ response thành công:
 
@@ -73,7 +80,7 @@ Ví dụ response thành công:
 }
 ```
 
-## Cài đặt
+## Cài đặt local
 
 ### 1. Cài dependencies
 
@@ -95,7 +102,7 @@ Kiểm tra:
 gs --version
 ```
 
-## Chạy app
+## Chạy app local
 
 ### Dev
 
@@ -112,8 +119,47 @@ npm start
 App mặc định chạy tại:
 
 ```bash
-http://localhost:3000
+http://localhost:5175
 ```
+
+## Chạy bằng Docker
+
+Project đã có sẵn:
+
+- `Dockerfile`
+- `docker-compose.yml`
+- `.dockerignore`
+
+### Build và start
+
+```bash
+docker compose up -d --build
+```
+
+### Xem log
+
+```bash
+docker compose logs -f
+```
+
+### Stop
+
+```bash
+docker compose down
+```
+
+App sẽ chạy tại:
+
+```bash
+http://localhost:5175
+```
+
+### Ghi chú Docker
+
+- image đã cài sẵn `ghostscript`
+- container dùng `node:24-bookworm-slim`
+- port mặc định: `5175`
+- restart policy: `unless-stopped`
 
 ## Cách hoạt động
 
@@ -139,19 +185,12 @@ http://localhost:3000
 projects/madpdf/
 ├─ public/
 │  ├─ app.js
-│  └─ styles.css
+│  ├─ styles.css
+│  └─ locales/
+├─ Dockerfile
+├─ docker-compose.yml
+├─ .dockerignore
 ├─ package.json
 ├─ README.md
 └─ server.js
 ```
-
-## Hướng nâng cấp tiếp theo
-
-- progress realtime cho giai đoạn compress phía server
-- preview metadata / page count PDF
-- batch compress nhiều file
-- queue xử lý nền
-- rate limit / IP throttling
-- auth + dashboard lịch sử nén file
-- deploy với nginx + pm2 hoặc Docker
-- preset quality ngoài DPI

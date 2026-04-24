@@ -1,0 +1,12 @@
+services:
+  madpdf:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: madpdf
+    ports:
+      - "5175:5175"
+    environment:
+      PORT: 5175
+      NODE_ENV: production
+    restart: unless-stopped
