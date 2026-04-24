@@ -1,65 +1,139 @@
 # MadPDF
 
-Web app nén PDF bằng Node.js với giao diện product-style, upload AJAX, và hỗ trợ đa ngôn ngữ.
+MadPDF is a lightweight web app for compressing PDF files with Ghostscript.
+It provides a simple browser UI, drag-and-drop upload, configurable DPI, upload progress feedback, multilingual copy, and direct download of the compressed file.
 
-## Tính năng
+## Features
 
-- Upload PDF qua giao diện web hiện đại
-- Drag & drop file PDF
-- AJAX upload không reload trang
-- Progress bar theo tiến trình upload
-- Nhập DPI dạng số nguyên từ `0` đến `300`
-- Nén PDF bằng Ghostscript khi có sẵn trên máy
-- Hỗ trợ đa ngôn ngữ:
-  - Tiếng Việt
+- Compress PDF files from the browser
+- Drag-and-drop upload
+- AJAX upload with progress indicator
+- Adjustable DPI from `0` to `300`
+- Ghostscript-based PDF compression
+- Download compressed files directly from the UI
+- Unicode-safe filename handling for downloaded files
+- Automatic temporary file cleanup
+- Multilingual UI:
+  - Vietnamese
   - English
-  - 繁體中文（台灣）
-  - 简体中文（中国大陆）
-  - 한국어
-  - 日本語
-- Hiển thị:
-  - dung lượng file sau nén
-  - phần trăm tiết kiệm
-  - tên file
-- Link tải file sau nén ngay trên giao diện
-- Tự xóa file tạm sau khi xử lý hoặc sau khi tải
-- Báo lỗi rõ ràng nếu máy chưa cài `gs`
+  - Traditional Chinese
+  - Simplified Chinese
+  - Korean
+  - Japanese
 
-## Công nghệ
+## Tech Stack
 
 - Node.js
 - Express
 - Multer
-- Ghostscript (`gs`) để nén PDF
-- Frontend vanilla JS + XHR upload progress
+- Ghostscript
+- Vanilla JavaScript
 
-## API hiện có
+## Requirements
+
+- Node.js 20+ or newer
+- Ghostscript installed and available as `gs`
+
+Check Ghostscript:
+
+```bash
+gs --version
+```
+
+## Getting Started
+
+### Install dependencies
+
+```bash
+npm install
+```
+
+### Install Ghostscript
+
+Ubuntu / Debian:
+
+```bash
+sudo apt update
+sudo apt install ghostscript
+```
+
+### Run in development
+
+```bash
+npm run dev
+```
+
+### Run in production mode
+
+```bash
+npm start
+```
+
+Default URL:
+
+```text
+http://localhost:5175
+```
+
+## Docker
+
+The project includes:
+
+- `Dockerfile`
+- `docker-compose.yml`
+- `.dockerignore`
+
+### Start with Docker Compose
+
+```bash
+docker compose up -d --build
+```
+
+### View logs
+
+```bash
+docker compose logs -f
+```
+
+### Stop
+
+```bash
+docker compose down
+```
+
+Default URL:
+
+```text
+http://localhost:5175
+```
+
+## API
 
 ### `GET /api/status`
 
-Trả trạng thái app và kiểm tra Ghostscript.
+Returns app and Ghostscript status.
 
-Ví dụ response:
+Example response:
 
 ```json
 {
   "ok": true,
   "gsReady": true,
-  "locale": "zh-TW"
+  "locale": "en"
 }
 ```
 
 ### `POST /api/compress`
 
-Upload PDF và nén file.
+Compresses an uploaded PDF.
 
 Form fields:
 
-- `pdf`: file PDF
-- `dpi`: số nguyên từ `0` đến `300`
-- `locale`: ngôn ngữ hiện tại, ví dụ `vi`, `en`, `zh-TW`, `zh-CN`
+- `pdf`: PDF file
+- `dpi`: integer from `0` to `300`
+- `locale`: UI locale such as `vi`, `en`, `zh-TW`, `zh-CN`, `ko`, `ja`
 
-Ví dụ response thành công:
+Example success response:
 
 ```json
 {
@@ -75,111 +149,28 @@ Ví dụ response thành công:
     "originalSize": "4.8 MB",
     "compressedSize": "1.7 MB",
     "savedSize": "3.1 MB",
-    "downloadUrl": "/download/demo-uuid.pdf"
+    "downloadUrl": "/download/demo-uuid.pdf?name=demo.pdf"
   }
 }
 ```
 
-## Cài đặt local
+## How It Works
 
-### 1. Cài dependencies
+1. Upload a PDF from the browser
+2. The frontend sends the file to `POST /api/compress`
+3. The server maps the requested DPI to an appropriate Ghostscript profile
+4. Ghostscript writes a compressed output PDF
+5. The app returns compression stats and a download URL
+6. The client downloads the result directly from the UI
 
-```bash
-npm install
-```
+## Notes
 
-### 2. Cài Ghostscript
+- Scanned PDFs and image-heavy PDFs typically compress better than text/vector-only PDFs.
+- Lower DPI usually reduces file size more aggressively, but may reduce image quality.
+- A DPI value of `0` is accepted by the app, but the backend still applies a safe internal minimum when invoking Ghostscript.
+- Temporary uploaded and generated files are removed automatically after download or expiry.
 
-Ubuntu / Debian:
-
-```bash
-sudo apt update && sudo apt install ghostscript
-```
-
-Kiểm tra:
-
-```bash
-gs --version
-```
-
-## Chạy app local
-
-### Dev
-
-```bash
-npm run dev
-```
-
-### Start
-
-```bash
-npm start
-```
-
-App mặc định chạy tại:
-
-```bash
-http://localhost:5175
-```
-
-## Chạy bằng Docker
-
-Project đã có sẵn:
-
-- `Dockerfile`
-- `docker-compose.yml`
-- `.dockerignore`
-
-### Build và start
-
-```bash
-docker compose up -d --build
-```
-
-### Xem log
-
-```bash
-docker compose logs -f
-```
-
-### Stop
-
-```bash
-docker compose down
-```
-
-App sẽ chạy tại:
-
-```bash
-http://localhost:5175
-```
-
-### Ghi chú Docker
-
-- image đã cài sẵn `ghostscript`
-- container dùng `node:24-bookworm-slim`
-- port mặc định: `5175`
-- restart policy: `unless-stopped`
-
-## Cách hoạt động
-
-- Người dùng chọn PDF
-- Frontend gửi file bằng AJAX đến `POST /api/compress`
-- Progress bar hiển thị tiến trình upload
-- Backend map DPI sang profile Ghostscript phù hợp (`/screen`, `/ebook`, `/printer`, `/prepress`)
-- Backend đồng thời ép downsample ảnh theo DPI đã nhập
-- Server trả JSON kết quả + link download
-- Người dùng tải file PDF đã nén trực tiếp từ giao diện
-
-## Lưu ý thực tế
-
-- PDF scan / PDF chứa ảnh sẽ giảm size rõ hơn
-- PDF chủ yếu là text/vector có thể giảm rất ít
-- DPI quá thấp có thể làm chất lượng ảnh xấu đi
-- Với giá trị `0`, app vẫn chấp nhận input nhưng backend sẽ dùng mức tối thiểu an toàn nội bộ khi gọi Ghostscript để tránh lỗi runtime
-- Progress bar hiện phản ánh tiến trình upload; sau đó UI chuyển sang trạng thái “đang nén PDF” trong lúc server xử lý
-
-## Cấu trúc
+## Project Structure
 
 ```text
 projects/madpdf/
@@ -194,3 +185,7 @@ projects/madpdf/
 ├─ README.md
 └─ server.js
 ```
+
+## License
+
+MIT
