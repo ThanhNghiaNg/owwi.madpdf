@@ -218,6 +218,30 @@ function withLang(url) {
   return `${absolute.pathname}${absolute.search}`;
 }
 
+async function forceDownloadCurrentResult(event) {
+  if (!lastResult || !downloadLink) return;
+  event.preventDefault();
+
+  const fileName = String(lastResult.originalName || 'download.pdf').normalize('NFC');
+  const response = await fetch(downloadLink.href, { credentials: 'same-origin' });
+
+  if (!response.ok) {
+    window.location.href = downloadLink.href;
+    return;
+  }
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const tempLink = document.createElement('a');
+  tempLink.href = objectUrl;
+  tempLink.download = fileName;
+  document.body.appendChild(tempLink);
+  tempLink.click();
+  tempLink.remove();
+
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+}
+
 function applyTranslations() {
   document.documentElement.lang = currentLocale;
   document.title = t('metaTitle');
@@ -252,6 +276,12 @@ async function setLocale(locale, options = {}) {
 if (langSelect) {
   langSelect.addEventListener('change', async () => {
     await setLocale(langSelect.value);
+  });
+}
+
+if (downloadLink) {
+  downloadLink.addEventListener('click', (event) => {
+    void forceDownloadCurrentResult(event);
   });
 }
 
