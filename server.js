@@ -10,6 +10,23 @@ const { spawn } = require('child_process');
 const app = express();
 const port = process.env.PORT || 5175;
 
+function resolveBuildVersion() {
+  if (process.env.APP_VERSION && process.env.APP_VERSION.trim()) {
+    return process.env.APP_VERSION.trim();
+  }
+
+  try {
+    const commitHash = fs.readFileSync(path.join(__dirname, '.commit_hash'), 'utf8').trim();
+    if (commitHash) return commitHash;
+  } catch (_error) {
+    // ignore missing file
+  }
+
+  return 'dev';
+}
+
+const APP_VERSION = resolveBuildVersion();
+
 const SUPPORTED_LOCALES = ['vi', 'en', 'zh-TW', 'zh-CN', 'ko', 'ja'];
 const SERVER_MESSAGES = {
   vi: {
@@ -558,7 +575,7 @@ function renderPage({ locale = 'en', gsReady = false, error = '' }) {
     </section>
   </main>
 
-  <script>window.__MADPDF__ = ${JSON.stringify({ gsReady, supportedLocales: SUPPORTED_LOCALES, locale: lang, version: 'e4c8134' })};</script>
+  <script>window.__MADPDF__ = ${JSON.stringify({ gsReady, supportedLocales: SUPPORTED_LOCALES, locale: lang, version: APP_VERSION })};</script>
   <script src="/app.js"></script>
 </body>
 </html>`;
