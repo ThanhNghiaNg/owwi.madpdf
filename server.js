@@ -10,11 +10,12 @@ const { spawn } = require('child_process');
 const app = express();
 const port = process.env.PORT || 5175;
 
-const SUPPORTED_LOCALES = ['vi', 'en', 'zh', 'ko', 'ja'];
+const SUPPORTED_LOCALES = ['vi', 'en', 'zh-TW', 'zh-CN', 'ko', 'ja'];
 const SERVER_MESSAGES = {
   vi: {
     metaTitle: 'MadPDF — Nén PDF theo DPI',
     metaDescription: 'Nén PDF trực tiếp trên web với giá trị DPI tùy chỉnh và tải về ngay.',
+    languageLabel: 'Ngôn ngữ',
     gsTitle: 'Thiếu Ghostscript',
     gsBody: 'Công cụ nén PDF dùng Ghostscript. Hãy cài nó trên server trước để bắt đầu xử lý.',
     errorTitle: 'Lỗi',
@@ -42,6 +43,7 @@ const SERVER_MESSAGES = {
   en: {
     metaTitle: 'MadPDF — Compress PDF by DPI',
     metaDescription: 'Compress PDF directly on the web with a custom DPI value and instant download.',
+    languageLabel: 'Language',
     gsTitle: 'Ghostscript is missing',
     gsBody: 'The PDF compression engine uses Ghostscript. Install it on the server first to start processing.',
     errorTitle: 'Error',
@@ -66,9 +68,38 @@ const SERVER_MESSAGES = {
     expiredFile: 'The file does not exist or has expired.',
     unknownError: 'Something went wrong.'
   },
-  zh: {
+  'zh-TW': {
+    metaTitle: 'MadPDF — 依 DPI 壓縮 PDF',
+    metaDescription: '在網頁上使用自訂 DPI 值壓縮 PDF，並立即下載。',
+    languageLabel: '語言',
+    gsTitle: '缺少 Ghostscript',
+    gsBody: 'PDF 壓縮引擎使用 Ghostscript。請先在伺服器上安裝後再開始處理。',
+    errorTitle: '錯誤',
+    consoleKicker: '壓縮控制台',
+    consoleTitle: '上傳與最佳化',
+    maxFile: '檔案上限：100MB',
+    pdfOnly: '僅支援 PDF',
+    dropTitle: '將 PDF 拖曳到這裡',
+    dropSubtitle: '或點擊選擇檔案',
+    noFile: '尚未選擇檔案',
+    dpiLabel: 'DPI (0 - 300)',
+    dpiHint: 'DPI 越低，檔案越小，但影像品質可能會下降。',
+    compressButton: '壓縮 PDF',
+    helper: '處理完成後，下載連結會顯示在這裡。',
+    download: '下載',
+    resultSummary: '壓縮後檔案 {size} • 節省 {percent}',
+    gsMissing: '伺服器尚未安裝 Ghostscript (gs)，因此目前無法壓縮 PDF。',
+    fileRequired: '請選擇一個 PDF 檔案。',
+    compressFailed: '無法壓縮 PDF。',
+    uploadFailed: '上傳失敗。請檢查檔案大小與 PDF 格式。',
+    pdfOnlyError: '僅支援 PDF 檔案。',
+    expiredFile: '檔案不存在或已過期。',
+    unknownError: '發生錯誤。'
+  },
+  'zh-CN': {
     metaTitle: 'MadPDF — 按 DPI 压缩 PDF',
     metaDescription: '使用自定义 DPI 值直接在网页上压缩 PDF，并立即下载。',
+    languageLabel: '语言',
     gsTitle: '缺少 Ghostscript',
     gsBody: 'PDF 压缩引擎使用 Ghostscript。请先在服务器上安装它后再开始处理。',
     errorTitle: '错误',
@@ -96,6 +127,7 @@ const SERVER_MESSAGES = {
   ko: {
     metaTitle: 'MadPDF — DPI로 PDF 압축',
     metaDescription: '사용자 지정 DPI 값으로 웹에서 바로 PDF를 압축하고 즉시 다운로드하세요.',
+    languageLabel: '언어',
     gsTitle: 'Ghostscript가 없습니다',
     gsBody: 'PDF 압축 엔진은 Ghostscript를 사용합니다. 먼저 서버에 설치해야 처리를 시작할 수 있습니다.',
     errorTitle: '오류',
@@ -123,6 +155,7 @@ const SERVER_MESSAGES = {
   ja: {
     metaTitle: 'MadPDF — DPIでPDFを圧縮',
     metaDescription: 'カスタム DPI 値で Web 上から PDF を圧縮し、すぐにダウンロードできます。',
+    languageLabel: '言語',
     gsTitle: 'Ghostscript が見つかりません',
     gsBody: 'PDF 圧縮エンジンは Ghostscript を使用します。処理を始める前にサーバーへインストールしてください。',
     errorTitle: 'エラー',
@@ -158,8 +191,14 @@ for (const dir of [tempRoot, uploadDir, outputDir]) {
 }
 
 function normalizeLocale(value) {
-  const input = String(value || '').toLowerCase();
-  if (input.startsWith('zh')) return 'zh';
+  const input = String(value || '').trim().toLowerCase();
+  if (input === 'zh-tw' || input === 'zh_tw' || input === 'zhtw') return 'zh-TW';
+  if (input === 'zh-cn' || input === 'zh_cn' || input === 'zhcn') return 'zh-CN';
+  if (input.startsWith('zh-hant')) return 'zh-TW';
+  if (input.startsWith('zh-hans')) return 'zh-CN';
+  if (input.startsWith('zh-tw')) return 'zh-TW';
+  if (input.startsWith('zh-cn')) return 'zh-CN';
+  if (input.startsWith('zh')) return 'zh-CN';
   if (input.startsWith('ko')) return 'ko';
   if (input.startsWith('ja')) return 'ja';
   if (input.startsWith('vi')) return 'vi';
@@ -417,7 +456,8 @@ function renderPage({ locale = 'en', gsReady = false, error = '' }) {
           <select id="lang-select" aria-label="${escapeHtml(serverText(lang, 'languageLabel'))}">
             <option value="vi" ${lang === 'vi' ? 'selected' : ''}>Tiếng Việt</option>
             <option value="en" ${lang === 'en' ? 'selected' : ''}>English</option>
-            <option value="zh" ${lang === 'zh' ? 'selected' : ''}>中文</option>
+            <option value="zh-TW" ${lang === 'zh-TW' ? 'selected' : ''}>繁體中文（台灣）</option>
+            <option value="zh-CN" ${lang === 'zh-CN' ? 'selected' : ''}>简体中文（中国大陆）</option>
             <option value="ko" ${lang === 'ko' ? 'selected' : ''}>한국어</option>
             <option value="ja" ${lang === 'ja' ? 'selected' : ''}>日本語</option>
           </select>

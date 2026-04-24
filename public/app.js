@@ -3,7 +3,8 @@ const config = window.__MADPDF__ || { gsReady: false, supportedLocales: ['en'], 
 const localeLabels = {
   vi: 'Tiếng Việt',
   en: 'English',
-  zh: '中文',
+  'zh-TW': '繁體中文（台灣）',
+  'zh-CN': '简体中文（中国大陆）',
   ko: '한국어',
   ja: '日本語',
 };
@@ -80,6 +81,22 @@ let currentLocale = config.locale || 'en';
 let lastSelectedFile = null;
 let lastResult = null;
 
+function normalizeLocale(locale) {
+  const input = String(locale || '').trim().toLowerCase();
+  if (input === 'zh-tw' || input === 'zh_tw' || input === 'zhtw') return 'zh-TW';
+  if (input === 'zh-cn' || input === 'zh_cn' || input === 'zhcn') return 'zh-CN';
+  if (input.startsWith('zh-hant')) return 'zh-TW';
+  if (input.startsWith('zh-hans')) return 'zh-CN';
+  if (input.startsWith('zh-tw')) return 'zh-TW';
+  if (input.startsWith('zh-cn')) return 'zh-CN';
+  if (input.startsWith('zh')) return 'zh-CN';
+  if (input.startsWith('ko')) return 'ko';
+  if (input.startsWith('ja')) return 'ja';
+  if (input.startsWith('vi')) return 'vi';
+  if (input.startsWith('en')) return 'en';
+  return 'en';
+}
+
 function isSupportedLocale(locale) {
   return (config.supportedLocales || []).includes(locale);
 }
@@ -87,22 +104,18 @@ function isSupportedLocale(locale) {
 function getLangFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const lang = params.get('lang');
-  return isSupportedLocale(lang) ? lang : null;
+  const normalized = normalizeLocale(lang);
+  return isSupportedLocale(normalized) ? normalized : null;
 }
 
 function detectInitialLocale() {
   const fromUrl = getLangFromUrl();
   if (fromUrl) return fromUrl;
 
-  const saved = localStorage.getItem('madpdf.locale');
+  const saved = normalizeLocale(localStorage.getItem('madpdf.locale'));
   if (saved && isSupportedLocale(saved)) return saved;
 
-  const browserLang = (navigator.language || 'en').toLowerCase();
-  if (browserLang.startsWith('vi')) return 'vi';
-  if (browserLang.startsWith('zh')) return 'zh';
-  if (browserLang.startsWith('ko')) return 'ko';
-  if (browserLang.startsWith('ja')) return 'ja';
-  return 'en';
+  return normalizeLocale(navigator.language || 'en');
 }
 
 function t(key, vars = {}) {
@@ -115,13 +128,14 @@ function t(key, vars = {}) {
 }
 
 async function loadLocale(locale) {
-  if (!isSupportedLocale(locale)) locale = 'en';
-  if (translations[locale]) return translations[locale];
+  const normalized = normalizeLocale(locale);
+  const target = isSupportedLocale(normalized) ? normalized : 'en';
+  if (translations[target]) return translations[target];
 
-  const response = await fetch(`/locales/${locale}.json`, { cache: 'no-cache' });
-  if (!response.ok) throw new Error(`Failed to load locale: ${locale}`);
+  const response = await fetch(`/locales/${target}.json`, { cache: 'no-cache' });
+  if (!response.ok) throw new Error(`Failed to load locale: ${target}`);
   const data = await response.json();
-  translations[locale] = data;
+  translations[target] = data;
   return data;
 }
 
@@ -222,9 +236,10 @@ function applyTranslations() {
 }
 
 async function setLocale(locale, options = {}) {
-  const nextLocale = isSupportedLocale(locale) ? locale : 'en';
-  await loadLocale(nextLocale);
-  currentLocale = nextLocale;
+  const nextLocale = normalizeLocale(locale);
+  const target = isSupportedLocale(nextLocale) ? nextLocale : 'en';
+  await loadLocale(target);
+  currentLocale = target;
   localStorage.setItem('madpdf.locale', currentLocale);
   if (options.updateUrl !== false) {
     updateUrlLang(currentLocale, Boolean(options.replaceUrl));
