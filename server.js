@@ -13,50 +13,140 @@ const port = process.env.PORT || 5175;
 const SUPPORTED_LOCALES = ['vi', 'en', 'zh', 'ko', 'ja'];
 const SERVER_MESSAGES = {
   vi: {
+    metaTitle: 'MadPDF — Nén PDF theo DPI',
+    metaDescription: 'Nén PDF trực tiếp trên web với giá trị DPI tùy chỉnh và tải về ngay.',
+    gsTitle: 'Thiếu Ghostscript',
+    gsBody: 'Công cụ nén PDF dùng Ghostscript. Hãy cài nó trên server trước để bắt đầu xử lý.',
+    errorTitle: 'Lỗi',
+    consoleKicker: 'Bảng điều khiển nén',
+    consoleTitle: 'Tải lên & tối ưu',
+    maxFile: 'File tối đa: 100MB',
+    pdfOnly: 'Chỉ PDF',
+    dropTitle: 'Thả file PDF vào đây',
+    dropSubtitle: 'hoặc bấm để chọn file',
+    noFile: 'Chưa chọn file nào',
+    dpiLabel: 'DPI (0 - 300)',
+    dpiHint: 'DPI thấp hơn sẽ giảm dung lượng nhiều hơn, nhưng chất lượng ảnh có thể giảm.',
+    compressButton: 'Nén PDF',
+    helper: 'Sau khi xử lý xong, link tải sẽ xuất hiện tại đây.',
+    download: 'Tải về',
+    resultSummary: 'File sau nén {size} • Tiết kiệm {percent}',
     gsMissing: 'Máy chủ chưa cài Ghostscript (gs), nên chưa thể nén PDF.',
     fileRequired: 'Bạn chưa chọn file PDF.',
     compressFailed: 'Không thể nén PDF.',
     uploadFailed: 'Upload thất bại. Kiểm tra lại dung lượng hoặc file PDF.',
-    pdfOnly: 'Chỉ hỗ trợ file PDF.',
+    pdfOnlyError: 'Chỉ hỗ trợ file PDF.',
     expiredFile: 'File không tồn tại hoặc đã hết hạn.',
-    unknownError: 'Đã có lỗi xảy ra.',
+    unknownError: 'Đã có lỗi xảy ra.'
   },
   en: {
+    metaTitle: 'MadPDF — Compress PDF by DPI',
+    metaDescription: 'Compress PDF directly on the web with a custom DPI value and instant download.',
+    gsTitle: 'Ghostscript is missing',
+    gsBody: 'The PDF compression engine uses Ghostscript. Install it on the server first to start processing.',
+    errorTitle: 'Error',
+    consoleKicker: 'Compression Console',
+    consoleTitle: 'Upload & optimize',
+    maxFile: 'Max file: 100MB',
+    pdfOnly: 'PDF only',
+    dropTitle: 'Drop your PDF here',
+    dropSubtitle: 'or click to choose a file',
+    noFile: 'No file selected',
+    dpiLabel: 'DPI (0 - 300)',
+    dpiHint: 'Lower DPI reduces file size more, but image quality may drop.',
+    compressButton: 'Compress PDF',
+    helper: 'After processing, your download link will appear here.',
+    download: 'Download',
+    resultSummary: 'Compressed file {size} • Saved {percent}',
     gsMissing: 'Ghostscript (gs) is not installed on the server yet, so PDF compression is unavailable.',
     fileRequired: 'Please choose a PDF file.',
     compressFailed: 'Unable to compress the PDF.',
     uploadFailed: 'Upload failed. Please check the file size and PDF format.',
-    pdfOnly: 'Only PDF files are supported.',
+    pdfOnlyError: 'Only PDF files are supported.',
     expiredFile: 'The file does not exist or has expired.',
-    unknownError: 'Something went wrong.',
+    unknownError: 'Something went wrong.'
   },
   zh: {
+    metaTitle: 'MadPDF — 按 DPI 压缩 PDF',
+    metaDescription: '使用自定义 DPI 值直接在网页上压缩 PDF，并立即下载。',
+    gsTitle: '缺少 Ghostscript',
+    gsBody: 'PDF 压缩引擎使用 Ghostscript。请先在服务器上安装它后再开始处理。',
+    errorTitle: '错误',
+    consoleKicker: '压缩控制台',
+    consoleTitle: '上传并优化',
+    maxFile: '最大文件：100MB',
+    pdfOnly: '仅 PDF',
+    dropTitle: '将 PDF 拖到这里',
+    dropSubtitle: '或点击选择文件',
+    noFile: '尚未选择文件',
+    dpiLabel: 'DPI (0 - 300)',
+    dpiHint: 'DPI 越低，文件越小，但图像质量可能会下降。',
+    compressButton: '压缩 PDF',
+    helper: '处理完成后，下载链接会显示在这里。',
+    download: '下载',
+    resultSummary: '压缩后文件 {size} • 节省 {percent}',
     gsMissing: '服务器尚未安装 Ghostscript (gs)，因此暂时无法压缩 PDF。',
     fileRequired: '请选择一个 PDF 文件。',
     compressFailed: '无法压缩 PDF。',
     uploadFailed: '上传失败。请检查文件大小和 PDF 格式。',
-    pdfOnly: '仅支持 PDF 文件。',
+    pdfOnlyError: '仅支持 PDF 文件。',
     expiredFile: '文件不存在或已过期。',
-    unknownError: '发生了错误。',
+    unknownError: '发生了错误。'
   },
   ko: {
+    metaTitle: 'MadPDF — DPI로 PDF 압축',
+    metaDescription: '사용자 지정 DPI 값으로 웹에서 바로 PDF를 압축하고 즉시 다운로드하세요.',
+    gsTitle: 'Ghostscript가 없습니다',
+    gsBody: 'PDF 압축 엔진은 Ghostscript를 사용합니다. 먼저 서버에 설치해야 처리를 시작할 수 있습니다.',
+    errorTitle: '오류',
+    consoleKicker: '압축 콘솔',
+    consoleTitle: '업로드 및 최적화',
+    maxFile: '최대 파일: 100MB',
+    pdfOnly: 'PDF 전용',
+    dropTitle: '여기에 PDF를 놓으세요',
+    dropSubtitle: '또는 클릭해서 파일 선택',
+    noFile: '선택된 파일이 없습니다',
+    dpiLabel: 'DPI (0 - 300)',
+    dpiHint: 'DPI가 낮을수록 파일 크기는 더 줄지만 이미지 품질이 떨어질 수 있습니다.',
+    compressButton: 'PDF 압축',
+    helper: '처리가 끝나면 다운로드 링크가 여기에 표시됩니다.',
+    download: '다운로드',
+    resultSummary: '압축된 파일 {size} • 절약 {percent}',
     gsMissing: '서버에 Ghostscript(gs)가 아직 설치되지 않아 PDF 압축을 사용할 수 없습니다.',
     fileRequired: 'PDF 파일을 선택해 주세요.',
     compressFailed: 'PDF를 압축할 수 없습니다.',
     uploadFailed: '업로드에 실패했습니다. 파일 크기와 PDF 형식을 확인해 주세요.',
-    pdfOnly: 'PDF 파일만 지원됩니다.',
+    pdfOnlyError: 'PDF 파일만 지원됩니다.',
     expiredFile: '파일이 없거나 만료되었습니다.',
-    unknownError: '오류가 발생했습니다.',
+    unknownError: '오류가 발생했습니다.'
   },
   ja: {
+    metaTitle: 'MadPDF — DPIでPDFを圧縮',
+    metaDescription: 'カスタム DPI 値で Web 上から PDF を圧縮し、すぐにダウンロードできます。',
+    gsTitle: 'Ghostscript が見つかりません',
+    gsBody: 'PDF 圧縮エンジンは Ghostscript を使用します。処理を始める前にサーバーへインストールしてください。',
+    errorTitle: 'エラー',
+    consoleKicker: '圧縮コンソール',
+    consoleTitle: 'アップロードと最適化',
+    maxFile: '最大ファイル: 100MB',
+    pdfOnly: 'PDFのみ',
+    dropTitle: 'ここに PDF をドロップ',
+    dropSubtitle: 'またはクリックしてファイルを選択',
+    noFile: 'ファイルが選択されていません',
+    dpiLabel: 'DPI (0 - 300)',
+    dpiHint: 'DPI を下げるほどファイルサイズは小さくなりますが、画像品質は下がる場合があります。',
+    compressButton: 'PDFを圧縮',
+    helper: '処理が完了すると、ここにダウンロードリンクが表示されます。',
+    download: 'ダウンロード',
+    resultSummary: '圧縮後のファイル {size} • 削減 {percent}',
     gsMissing: 'サーバーに Ghostscript (gs) がインストールされていないため、PDF を圧縮できません。',
     fileRequired: 'PDF ファイルを選択してください。',
     compressFailed: 'PDF を圧縮できませんでした。',
     uploadFailed: 'アップロードに失敗しました。ファイルサイズと PDF 形式を確認してください。',
-    pdfOnly: 'PDF ファイルのみ対応しています。',
+    pdfOnlyError: 'PDF ファイルのみ対応しています。',
     expiredFile: 'ファイルが存在しないか、有効期限が切れています。',
-    unknownError: 'エラーが発生しました。',
-  },
+    unknownError: 'エラーが発生しました。'
+  }
 };
 
 const tempRoot = path.join(os.tmpdir(), 'madpdf');
@@ -77,8 +167,13 @@ function normalizeLocale(value) {
   return 'en';
 }
 
+function resolveLocale(value) {
+  const normalized = normalizeLocale(value);
+  return SUPPORTED_LOCALES.includes(normalized) ? normalized : 'en';
+}
+
 function serverText(locale, key) {
-  const lang = normalizeLocale(locale);
+  const lang = resolveLocale(locale);
   return SERVER_MESSAGES[lang]?.[key] || SERVER_MESSAGES.en[key] || key;
 }
 
@@ -294,14 +389,15 @@ async function compressPdf({ file, dpi: rawDpi }) {
   }
 }
 
-function renderPage({ gsReady = false, error = '' }) {
+function renderPage({ locale = 'en', gsReady = false, error = '' }) {
+  const lang = resolveLocale(locale);
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MadPDF — Compress PDF by DPI</title>
-  <meta name="description" content="Compress PDF directly in the browser with a custom DPI value and instant download." />
+  <title>${escapeHtml(serverText(lang, 'metaTitle'))}</title>
+  <meta name="description" content="${escapeHtml(serverText(lang, 'metaDescription'))}" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -315,29 +411,29 @@ function renderPage({ gsReady = false, error = '' }) {
   <main class="page">
     <section class="hero-shell">
       <div class="hero-topbar">
-        <p class="eyebrow" data-i18n="brand">MadPDF</p>
+        <p class="eyebrow">MadPDF</p>
         <label class="lang-switcher" for="lang-select">
-          <span class="sr-only" data-i18n="language">Language</span>
-          <select id="lang-select" aria-label="Language">
-            <option value="vi">Tiếng Việt</option>
-            <option value="en">English</option>
-            <option value="zh">中文</option>
-            <option value="ko">한국어</option>
-            <option value="ja">日本語</option>
+          <span class="sr-only">${escapeHtml(serverText(lang, 'languageLabel'))}</span>
+          <select id="lang-select" aria-label="${escapeHtml(serverText(lang, 'languageLabel'))}">
+            <option value="vi" ${lang === 'vi' ? 'selected' : ''}>Tiếng Việt</option>
+            <option value="en" ${lang === 'en' ? 'selected' : ''}>English</option>
+            <option value="zh" ${lang === 'zh' ? 'selected' : ''}>中文</option>
+            <option value="ko" ${lang === 'ko' ? 'selected' : ''}>한국어</option>
+            <option value="ja" ${lang === 'ja' ? 'selected' : ''}>日本語</option>
           </select>
         </label>
       </div>
       <div class="hero-copy">
-        <h1 data-i18n="heroTitle">Compress PDF by DPI</h1>
-        <p class="subtitle" data-i18n="heroSubtitle">Upload PDF, choose DPI from 0 to 300, compress as much as you want.</p>
+        <h1 data-i18n="heroTitle">${escapeHtml(serverText(lang, 'heroTitle'))}</h1>
+        <p class="subtitle" data-i18n="heroSubtitle">${escapeHtml(serverText(lang, 'heroSubtitle'))}</p>
       </div>
     </section>
 
     ${!gsReady ? `
       <section class="card notice warning" id="gs-warning">
         <div>
-          <h2 data-i18n="gsTitle">Ghostscript is missing</h2>
-          <p data-i18n="gsBody">The PDF compression engine uses Ghostscript. Install it on the server first to enable processing.</p>
+          <h2 data-i18n="gsTitle">${escapeHtml(serverText(lang, 'gsTitle'))}</h2>
+          <p data-i18n="gsBody">${escapeHtml(serverText(lang, 'gsBody'))}</p>
         </div>
         <pre>sudo apt update && sudo apt install ghostscript</pre>
       </section>
@@ -345,7 +441,7 @@ function renderPage({ gsReady = false, error = '' }) {
 
     ${error ? `
       <section class="card notice error">
-        <h2 data-i18n="errorTitle">Error</h2>
+        <h2 data-i18n="errorTitle">${escapeHtml(serverText(lang, 'errorTitle'))}</h2>
         <p>${escapeHtml(error)}</p>
       </section>
     ` : ''}
@@ -353,12 +449,12 @@ function renderPage({ gsReady = false, error = '' }) {
     <section class="card app-shell">
       <div class="panel-head">
         <div>
-          <p class="section-kicker" data-i18n="consoleKicker">Compression Console</p>
-          <h2 data-i18n="consoleTitle">Upload & optimize</h2>
+          <p class="section-kicker" data-i18n="consoleKicker">${escapeHtml(serverText(lang, 'consoleKicker'))}</p>
+          <h2 data-i18n="consoleTitle">${escapeHtml(serverText(lang, 'consoleTitle'))}</h2>
         </div>
         <div class="pill-row">
-          <span class="pill" data-i18n="maxFile">Max file: 100MB</span>
-          <span class="pill" data-i18n="pdfOnly">PDF only</span>
+          <span class="pill" data-i18n="maxFile">${escapeHtml(serverText(lang, 'maxFile'))}</span>
+          <span class="pill" data-i18n="pdfOnly">${escapeHtml(serverText(lang, 'pdfOnly'))}</span>
         </div>
       </div>
 
@@ -367,17 +463,17 @@ function renderPage({ gsReady = false, error = '' }) {
           <input type="file" name="pdf" accept="application/pdf,.pdf" required id="pdf-input" />
           <div class="dropzone-icon">PDF</div>
           <div>
-            <strong data-i18n="dropTitle">Drop your PDF here</strong>
-            <span data-i18n="dropSubtitle">or click to choose a file</span>
+            <strong data-i18n="dropTitle">${escapeHtml(serverText(lang, 'dropTitle'))}</strong>
+            <span data-i18n="dropSubtitle">${escapeHtml(serverText(lang, 'dropSubtitle'))}</span>
           </div>
-          <p id="selected-file" data-i18n="noFile">No file selected</p>
+          <p id="selected-file" data-i18n="noFile">${escapeHtml(serverText(lang, 'noFile'))}</p>
         </label>
 
         <div class="control-grid single">
           <label class="field field-full">
             <div class="field-head">
-              <span data-i18n="dpiLabel">DPI (0 - 300)</span>
-              <small data-i18n="dpiHint">Lower DPI reduces file size more, but image quality may drop.</small>
+              <span data-i18n="dpiLabel">${escapeHtml(serverText(lang, 'dpiLabel'))}</span>
+              <small data-i18n="dpiHint">${escapeHtml(serverText(lang, 'dpiHint'))}</small>
             </div>
             <input type="number" name="dpi" min="0" max="300" step="1" value="50" required id="dpi-input" />
           </label>
@@ -385,24 +481,24 @@ function renderPage({ gsReady = false, error = '' }) {
 
         <div class="actions">
           <button type="submit" class="button" id="submit-button" ${gsReady ? '' : 'disabled'}>
-            <span data-i18n="compressButton">Compress PDF</span>
+            <span data-i18n="compressButton">${escapeHtml(serverText(lang, 'compressButton'))}</span>
           </button>
-          <p class="helper" data-i18n="helper">After processing, your download link will appear here.</p>
+          <p class="helper" data-i18n="helper">${escapeHtml(serverText(lang, 'helper'))}</p>
         </div>
 
         <section class="progress-card hidden" id="progress-card" aria-live="polite">
           <div class="progress-top">
-            <strong id="progress-label" data-i18n="uploading">Uploading...</strong>
+            <strong id="progress-label">...</strong>
             <span id="progress-percent">0%</span>
           </div>
           <div class="progress-bar">
             <div class="progress-fill" id="progress-fill"></div>
           </div>
-          <p id="progress-note" data-i18n="uploadPrepare">Preparing upload...</p>
+          <p id="progress-note">...</p>
         </section>
 
         <section class="notice error hidden" id="error-card">
-          <h2 data-i18n="errorTitle">Error</h2>
+          <h2 data-i18n="errorTitle">${escapeHtml(serverText(lang, 'errorTitle'))}</h2>
           <p id="error-message"></p>
         </section>
 
@@ -410,11 +506,11 @@ function renderPage({ gsReady = false, error = '' }) {
           <div class="result-inline">
             <div class="result-copy">
               <strong id="result-file-name">-</strong>
-              <p id="result-summary">Compressed file <span id="stat-compressed-size">-</span> • Saved <span id="stat-saved-percent">-</span></p>
+              <p id="result-summary">${escapeHtml(serverText(lang, 'resultSummary')).replace('{size}', '<span>-</span>').replace('{percent}', '<span>-</span>')}</p>
             </div>
-            <a class="button secondary download-button" id="download-link" href="#" aria-label="Download">
+            <a class="button secondary download-button" id="download-link" href="#" aria-label="${escapeHtml(serverText(lang, 'download'))}">
               <span class="button-icon" aria-hidden="true">↓</span>
-              <span data-i18n="download">Download</span>
+              <span data-i18n="download">${escapeHtml(serverText(lang, 'download'))}</span>
             </a>
           </div>
         </section>
@@ -422,25 +518,26 @@ function renderPage({ gsReady = false, error = '' }) {
     </section>
   </main>
 
-  <script>window.__MADPDF__ = ${JSON.stringify({ gsReady, supportedLocales: SUPPORTED_LOCALES })};</script>
+  <script>window.__MADPDF__ = ${JSON.stringify({ gsReady, supportedLocales: SUPPORTED_LOCALES, locale: lang })};</script>
   <script src="/app.js"></script>
 </body>
 </html>`;
 }
 
-app.get('/', async (_req, res) => {
+app.get('/', async (req, res) => {
   const gsReady = await ghostscriptAvailable();
-  res.send(renderPage({ gsReady }));
+  const locale = resolveLocale(req.query.lang || req.query.locale);
+  res.send(renderPage({ gsReady, locale }));
 });
 
 app.get('/api/status', async (req, res) => {
   const gsReady = await ghostscriptAvailable();
-  const locale = normalizeLocale(req.query.locale);
+  const locale = resolveLocale(req.query.locale || req.query.lang);
   res.json({ ok: true, gsReady, locale });
 });
 
 app.post('/api/compress', upload.single('pdf'), async (req, res) => {
-  const locale = normalizeLocale(req.body?.locale);
+  const locale = resolveLocale(req.body?.locale || req.query?.lang);
   const gsReady = await ghostscriptAvailable();
 
   if (!gsReady) {
@@ -465,25 +562,25 @@ app.post('/api/compress', upload.single('pdf'), async (req, res) => {
 });
 
 app.post('/compress', upload.single('pdf'), async (req, res) => {
-  const locale = normalizeLocale(req.body?.locale);
+  const locale = resolveLocale(req.body?.locale || req.query?.lang);
   const gsReady = await ghostscriptAvailable();
 
   if (!gsReady) {
     if (req.file) await removeFileSafe(req.file.path);
-    res.status(503).send(renderPage({ gsReady, error: serverText(locale, 'gsMissing') }));
+    res.status(503).send(renderPage({ gsReady, locale, error: serverText(locale, 'gsMissing') }));
     return;
   }
 
   if (!req.file) {
-    res.status(400).send(renderPage({ gsReady, error: serverText(locale, 'fileRequired') }));
+    res.status(400).send(renderPage({ gsReady, locale, error: serverText(locale, 'fileRequired') }));
     return;
   }
 
   try {
     const result = await compressPdf({ file: req.file, dpi: req.body.dpi });
-    res.redirect(result.downloadUrl);
+    res.redirect(`${result.downloadUrl}${result.downloadUrl.includes('?') ? '&' : '?'}lang=${encodeURIComponent(locale)}`);
   } catch (_error) {
-    res.status(500).send(renderPage({ gsReady, error: serverText(locale, 'compressFailed') }));
+    res.status(500).send(renderPage({ gsReady, locale, error: serverText(locale, 'compressFailed') }));
   }
 });
 
@@ -491,7 +588,7 @@ app.get('/download/:fileName', async (req, res) => {
   const fileName = path.basename(req.params.fileName);
   const filePath = path.join(outputDir, fileName);
   const requestedName = sanitizeDownloadName(normalizeUploadedFileName(req.query.name || fileName));
-  const locale = normalizeLocale(req.query.locale);
+  const locale = resolveLocale(req.query.locale || req.query.lang);
 
   try {
     await fsp.access(filePath, fs.constants.R_OK);
@@ -508,12 +605,12 @@ app.get('/download/:fileName', async (req, res) => {
 });
 
 app.use((error, req, res, _next) => {
-  const locale = normalizeLocale(req.body?.locale || req.query?.locale);
+  const locale = resolveLocale(req.body?.locale || req.query?.locale || req.query?.lang);
   const isApi = (req.originalUrl || '').startsWith('/api/');
   const key = error instanceof multer.MulterError
     ? 'uploadFailed'
     : error.message === 'PDF_ONLY'
-      ? 'pdfOnly'
+      ? 'pdfOnlyError'
       : 'unknownError';
   const message = serverText(locale, key);
 
@@ -523,9 +620,9 @@ app.use((error, req, res, _next) => {
   }
 
   ghostscriptAvailable().then((gsReady) => {
-    res.status(400).send(renderPage({ gsReady, error: message }));
+    res.status(400).send(renderPage({ gsReady, locale, error: message }));
   }).catch(() => {
-    res.status(400).send(renderPage({ gsReady: false, error: message }));
+    res.status(400).send(renderPage({ gsReady: false, locale, error: message }));
   });
 });
 
