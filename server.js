@@ -128,6 +128,28 @@ function cleanupLater(...filePaths) {
   }, 10 * 60 * 1000).unref();
 }
 
+function sanitizeDownloadName(value) {
+  const baseName = path.basename(String(value || 'download.pdf')).trim() || 'download.pdf';
+  return baseName.replace(/[\r\n"]/g, '_');
+}
+
+function asciiFallbackFileName(fileName) {
+  const parsed = path.parse(fileName);
+  const safeBase = (parsed.name || 'download')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9._-]+/g, '_')
+    .replace(/^[_\.]+|[_\.]+$/g, '') || 'download';
+  const safeExt = (parsed.ext || '.pdf').replace(/[^a-zA-Z0-9.]/g, '') || '.pdf';
+  return `${safeBase}${safeExt}`;
+}
+
+function buildContentDisposition(fileName) {
+  const safeName = sanitizeDownloadName(fileName);
+  const fallbackName = asciiFallbackFileName(safeName);
+  return `attachment; filename="${fallbackName}"; filename*=UTF-8''${encodeURIComponent(safeName)}`;
+}
+
 async function compressPdf({ file, dpi: rawDpi }) {
   const dpi = clampDpi(rawDpi);
   const profile = compressionProfileForDpi(dpi);
@@ -182,7 +204,7 @@ async function compressPdf({ file, dpi: rawDpi }) {
       originalSize: formatBytes(originalStats.size),
       compressedSize: formatBytes(compressedStats.size),
       savedSize: formatBytes(savedBytes),
-      downloadUrl: `/download/${encodeURIComponent(outputName)}`,
+      downloadUrl: `/download/${encodeURIComponent(outputName)}?name=${encodeURIComponent(file.originalname)}`,
     };
   } catch (error) {
     await removeFileSafe(inputPath);
@@ -437,10 +459,13 @@ app.post('/compress', upload.single('pdf'), async (req, res) => {
 app.get('/download/:fileName', async (req, res) => {
   const fileName = path.basename(req.params.fileName);
   const filePath = path.join(outputDir, fileName);
+  const requestedName = sanitizeDownloadName(req.query.name || fileName);
 
   try {
     await fsp.access(filePath, fs.constants.R_OK);
-    res.download(filePath, fileName, async (error) => {
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', buildContentDisposition(requestedName));
+    res.sendFile(filePath, async (error) => {
       if (!error) {
         await removeFileSafe(filePath);
       }
