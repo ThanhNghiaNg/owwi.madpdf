@@ -1,27 +1,29 @@
 # MadPDF
 
-MadPDF is a lightweight web app for compressing PDF files with Ghostscript.
-It provides a simple browser UI, drag-and-drop upload, configurable DPI, upload progress feedback, multilingual copy, and direct download of the compressed file.
+MadPDF is an open-source web app for compressing PDF files with Ghostscript.
+
+It includes a simple browser UI, drag-and-drop upload, configurable DPI, multilingual support, and direct download of the compressed file.
 
 ## Features
 
-- Compress PDF files from the browser
+- PDF compression in the browser
 - Drag-and-drop upload
-- AJAX upload with progress indicator
+- AJAX upload with progress feedback
 - Adjustable DPI from `0` to `300`
-- Ghostscript-based PDF compression
-- Download compressed files directly from the UI
-- Unicode-safe filename handling for downloaded files
+- Ghostscript-based compression
+- Direct download after processing
+- Unicode-safe download filenames
 - Automatic temporary file cleanup
-- Multilingual UI:
+- Multilingual UI
   - Vietnamese
   - English
-  - Traditional Chinese
-  - Simplified Chinese
+  - Traditional Chinese (Taiwan)
+  - Simplified Chinese (Mainland China)
   - Korean
   - Japanese
+- Docker support
 
-## Tech Stack
+## Stack
 
 - Node.js
 - Express
@@ -31,8 +33,10 @@ It provides a simple browser UI, drag-and-drop upload, configurable DPI, upload 
 
 ## Requirements
 
-- Node.js 20+ or newer
-- Ghostscript installed and available as `gs`
+### Local run
+
+- Node.js 20+
+- Ghostscript available as `gs`
 
 Check Ghostscript:
 
@@ -40,68 +44,53 @@ Check Ghostscript:
 gs --version
 ```
 
-## Getting Started
+## Quick Start
 
-### Install dependencies
+### Install
 
 ```bash
 npm install
 ```
 
-### Install Ghostscript
-
-Ubuntu / Debian:
-
-```bash
-sudo apt update
-sudo apt install ghostscript
-```
-
-### Run in development
-
-```bash
-npm run dev
-```
-
-### Run in production mode
+### Run
 
 ```bash
 npm start
 ```
 
-Default URL:
+App runs at:
 
 ```text
 http://localhost:5175
 ```
 
+### Development mode
+
+```bash
+npm run dev
+```
+
 ## Docker
 
-The project includes:
-
-- `Dockerfile`
-- `docker-compose.yml`
-- `.dockerignore`
-
-### Start with Docker Compose
+Build and run with Docker Compose:
 
 ```bash
 docker compose up -d --build
 ```
 
-### View logs
+View logs:
 
 ```bash
 docker compose logs -f
 ```
 
-### Stop
+Stop:
 
 ```bash
 docker compose down
 ```
 
-Default URL:
+App runs at:
 
 ```text
 http://localhost:5175
@@ -111,9 +100,9 @@ http://localhost:5175
 
 ### `GET /api/status`
 
-Returns app and Ghostscript status.
+Returns service status.
 
-Example response:
+Example:
 
 ```json
 {
@@ -125,7 +114,7 @@ Example response:
 
 ### `POST /api/compress`
 
-Compresses an uploaded PDF.
+Compress an uploaded PDF.
 
 Form fields:
 
@@ -133,7 +122,7 @@ Form fields:
 - `dpi`: integer from `0` to `300`
 - `locale`: UI locale such as `vi`, `en`, `zh-TW`, `zh-CN`, `ko`, `ja`
 
-Example success response:
+Example response:
 
 ```json
 {
@@ -154,26 +143,10 @@ Example success response:
 }
 ```
 
-## How It Works
-
-1. Upload a PDF from the browser
-2. The frontend sends the file to `POST /api/compress`
-3. The server maps the requested DPI to an appropriate Ghostscript profile
-4. Ghostscript writes a compressed output PDF
-5. The app returns compression stats and a download URL
-6. The client downloads the result directly from the UI
-
-## Notes
-
-- Scanned PDFs and image-heavy PDFs typically compress better than text/vector-only PDFs.
-- Lower DPI usually reduces file size more aggressively, but may reduce image quality.
-- A DPI value of `0` is accepted by the app, but the backend still applies a safe internal minimum when invoking Ghostscript.
-- Temporary uploaded and generated files are removed automatically after download or expiry.
-
 ## Project Structure
 
 ```text
-projects/madpdf/
+.
 ├─ public/
 │  ├─ app.js
 │  ├─ styles.css

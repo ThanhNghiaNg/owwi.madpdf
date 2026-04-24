@@ -558,7 +558,7 @@ function renderPage({ locale = 'en', gsReady = false, error = '' }) {
     </section>
   </main>
 
-  <script>window.__MADPDF__ = ${JSON.stringify({ gsReady, supportedLocales: SUPPORTED_LOCALES, locale: lang })};</script>
+  <script>window.__MADPDF__ = ${JSON.stringify({ gsReady, supportedLocales: SUPPORTED_LOCALES, locale: lang, version: 'e4c8134' })};</script>
   <script src="/app.js"></script>
 </body>
 </html>`;

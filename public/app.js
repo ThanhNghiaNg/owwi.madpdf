@@ -1,4 +1,7 @@
-const config = window.__MADPDF__ || { gsReady: false, supportedLocales: ['en'], locale: 'en' };
+const config = window.__MADPDF__ || { gsReady: false, supportedLocales: ['en'], locale: 'en', version: 'dev' };
+
+const currentComithash = config.version || 'dev';
+console.debug('version ', currentComithash);
 
 const localeLabels = {
   vi: 'Tiếng Việt',
