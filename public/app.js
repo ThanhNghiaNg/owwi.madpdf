@@ -78,6 +78,11 @@ const errorMessage = document.getElementById('error-message');
 const resultCard = document.getElementById('result-card');
 const downloadLink = document.getElementById('download-link');
 const resultFileName = document.getElementById('result-file-name');
+const currentYear = document.getElementById('current-year');
+
+if (currentYear) {
+  currentYear.textContent = String(new Date().getFullYear());
+}
 
 let translations = { ...defaultTranslations };
 let currentLocale = config.locale || 'en';
